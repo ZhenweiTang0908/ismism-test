@@ -1,6 +1,6 @@
-import { access, readFile } from "node:fs/promises";
-import path from "node:path";
-
+import fullCatalogJson from "@/data/ism.json";
+import questionBankJson from "@/data/ismism-question-bank.json";
+import enhancedCatalogJson from "@/data/ismism-sum-enhanced.json";
 import { FALLBACK_ISM_INFO, MOCK_QUESTIONS } from "@/lib/ismism/mock-data";
 import {
   DIMENSION_LABELS,
@@ -81,41 +81,6 @@ const normalizeQuestionType = (value?: string): QuestionType | null => {
   }
 };
 
-const exists = async (targetPath: string) => {
-  try {
-    await access(targetPath);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-const resolveDataFile = async (fileName: string) => {
-  const candidatePaths = [
-    path.join(/* turbopackIgnore: true */ process.cwd(), "../data", fileName),
-    path.join(/* turbopackIgnore: true */ process.cwd(), "data", fileName),
-    path.join(/* turbopackIgnore: true */ process.cwd(), "../../data", fileName),
-  ];
-
-  for (const filePath of candidatePaths) {
-    if (await exists(filePath)) {
-      return filePath;
-    }
-  }
-
-  throw new Error(`Unable to locate data file: ${fileName}`);
-};
-
-const readJsonFile = async <T>(fileName: string): Promise<T | null> => {
-  try {
-    const filePath = await resolveDataFile(fileName);
-    const content = await readFile(filePath, "utf8");
-    return JSON.parse(content) as T;
-  } catch {
-    return null;
-  }
-};
-
 const normalizeDatasetQuestion = (
   id: string,
   rawQuestion: RawQuestion,
@@ -189,14 +154,9 @@ let fullCatalogPromise: Promise<Record<string, IsmCatalogEntry>> | null = null;
 
 export const getQuizQuestions = async () => {
   questionsPromise ??= (async () => {
-    const questionBank = await readJsonFile<Record<string, RawQuestion>>(
-      "ismism-question-bank.json",
-    );
-    const normalized = questionBank
-      ? Object.entries(questionBank)
-          .map(([id, rawQuestion]) => normalizeDatasetQuestion(id, rawQuestion))
-          .filter((question): question is QuizQuestion => question !== null)
-      : [];
+    const normalized = Object.entries(questionBankJson as Record<string, RawQuestion>)
+      .map(([id, rawQuestion]) => normalizeDatasetQuestion(id, rawQuestion))
+      .filter((question): question is QuizQuestion => question !== null);
 
     return DIMENSION_ORDER.flatMap((dimension) =>
       buildDimensionQuestionSet(
@@ -211,12 +171,9 @@ export const getQuizQuestions = async () => {
 
 export const getEnhancedIsmCatalog = async () => {
   enhancedCatalogPromise ??= (async () => {
-    const catalog = await readJsonFile<Record<string, IsmCatalogEntry>>(
-      "ismism-sum-enhanced.json",
-    );
     return {
       ...FALLBACK_ISM_INFO,
-      ...(catalog ?? {}),
+      ...(enhancedCatalogJson as Record<string, IsmCatalogEntry>),
     };
   })();
 
@@ -225,10 +182,9 @@ export const getEnhancedIsmCatalog = async () => {
 
 export const getFullIsmCatalog = async () => {
   fullCatalogPromise ??= (async () => {
-    const catalog = await readJsonFile<Record<string, IsmCatalogEntry>>("ism.json");
     return {
       ...FALLBACK_ISM_INFO,
-      ...(catalog ?? {}),
+      ...(fullCatalogJson as Record<string, IsmCatalogEntry>),
     };
   })();
 
