@@ -102,6 +102,20 @@ export type QuizResult = {
   };
 };
 
+export type QuizResultAiInterpretation = {
+  resultSummary: string;
+  philosophicalExplanation: string;
+  simpleExplanation: string;
+  exampleScenario: string;
+  dimensionInterpretations: Array<{
+    key: DimensionKey;
+    label: string;
+    digit: 1 | 2 | 3 | 4;
+    title: string;
+    explanation: string;
+  }>;
+};
+
 export type SubmitQuizResponse = {
   result: QuizResult;
   storage: {
@@ -111,4 +125,8 @@ export type SubmitQuizResponse = {
     clientTable?: string;
     message?: string;
   };
+};
+
+export type QuizResultAiInterpretationResponse = {
+  interpretation: QuizResultAiInterpretation;
 };

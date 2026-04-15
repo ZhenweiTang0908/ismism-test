@@ -1,11 +1,14 @@
 "use client";
 
-import { startTransition, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 
 import { AGREEMENT_OPTIONS } from "@/lib/ismism/types";
 import type {
   AgreementValue,
   AnswerMap,
+  QuizResult,
+  QuizResultAiInterpretation,
+  QuizResultAiInterpretationResponse,
   QuizQuestion,
   RespondentProfile,
   SubmitQuizResponse,
@@ -33,17 +36,37 @@ const optionToneMap: Record<AgreementValue, string> = {
 const FRAMEWORK_DIMENSIONS = [
   {
     title: "场域",
-    body: "它讨论你如何理解世界的背景系统：你会先看到稳定秩序、深层结构、主体视角，还是一个需要实践介入的行动场。",
+    body: "它讨论你如何理解世界的背景系统。这里不是把世界看成一个抽象大词，而是追问：事物到底是在什么样的整体关系网里发生的。你更可能先看到稳定秩序、深层结构、主体视角，还是一个需要行动介入的实践场。",
   },
   {
     title: "本体",
-    body: "它讨论什么才算真正存在：是对象与资源、关系结构、主体观念，还是持续生成中的行动与过程更关键。",
+    body: "它讨论什么才算真正存在。是对象、资源、制度这些可确认的东西更根本，还是关系结构、主体观念、生成过程更关键。换句话说，它在追问你的“存在清单”到底由什么构成。",
   },
   {
     title: "现象",
-    body: "它讨论真实如何向人显现：你更信任直观经验、中介解释、第一人称体验，还是裂缝、错位与未完成状态。",
+    body: "它讨论真实如何向人显现。你更信任直观经验，还是认为一切经验都经过中介和解释；你更看重第一人称体验，还是对裂缝、错位、反讽和未完成状态更敏感。",
   },
 ] as const;
+
+const requestAiInterpretation = async (result: QuizResult) => {
+  const response = await fetch("/api/quiz/explain", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ result }),
+  });
+
+  const payload = (await response.json()) as Partial<QuizResultAiInterpretationResponse> & {
+    error?: string;
+  };
+
+  if (!response.ok || !payload.interpretation) {
+    throw new Error(payload.error || "AI 解读生成失败，请稍后再试。");
+  }
+
+  return payload.interpretation;
+};
 
 export default function QuizExperience({ questions }: QuizExperienceProps) {
   const [phase, setPhase] = useState<Phase>("intro");
@@ -53,6 +76,11 @@ export default function QuizExperience({ questions }: QuizExperienceProps) {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [response, setResponse] = useState<SubmitQuizResponse | null>(null);
+  const [aiInterpretation, setAiInterpretation] =
+    useState<QuizResultAiInterpretation | null>(null);
+  const [aiError, setAiError] = useState("");
+  const [isGeneratingAiInterpretation, setIsGeneratingAiInterpretation] =
+    useState(false);
 
   const currentQuestion = questions[currentIndex];
   const answeredCount = Object.keys(answers).length;
@@ -81,6 +109,9 @@ export default function QuizExperience({ questions }: QuizExperienceProps) {
     setError("");
     setIsSubmitting(false);
     setResponse(null);
+    setAiInterpretation(null);
+    setAiError("");
+    setIsGeneratingAiInterpretation(false);
   };
 
   const movePrevious = () => {
@@ -164,6 +195,67 @@ export default function QuizExperience({ questions }: QuizExperienceProps) {
       }, 120);
     }
   };
+
+  const retryAiInterpretation = async () => {
+    if (!response?.result) {
+      return;
+    }
+
+    setAiError("");
+    setIsGeneratingAiInterpretation(true);
+
+    try {
+      const interpretation = await requestAiInterpretation(response.result);
+      setAiInterpretation(interpretation);
+    } catch (interpretationError) {
+      setAiError(
+        interpretationError instanceof Error
+          ? interpretationError.message
+          : "AI 解读生成失败，请稍后再试。",
+      );
+    } finally {
+      setIsGeneratingAiInterpretation(false);
+    }
+  };
+
+  useEffect(() => {
+    if (phase !== "result" || !response?.result) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadInterpretation = async () => {
+      setAiInterpretation(null);
+      setAiError("");
+      setIsGeneratingAiInterpretation(true);
+
+      try {
+        const interpretation = await requestAiInterpretation(response.result);
+        if (!cancelled) {
+          setAiInterpretation(interpretation);
+        }
+      } catch (interpretationError) {
+        if (!cancelled) {
+          setAiError(
+            interpretationError instanceof Error
+              ? interpretationError.message
+              : "AI 解读生成失败，请稍后再试。",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setIsGeneratingAiInterpretation(false);
+        }
+      }
+    };
+
+    void loadInterpretation();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [phase, response?.result]);
 
   if (phase === "result" && response) {
     return (
@@ -253,6 +345,97 @@ export default function QuizExperience({ questions }: QuizExperienceProps) {
           </article>
         </div>
 
+        <article className="rounded-[1.5rem] border border-stone-200/80 bg-white/92 p-5 shadow-[0_14px_36px_rgba(43,33,23,0.05)] sm:rounded-[1.8rem] sm:p-7">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm uppercase tracking-[0.3em] text-stone-500">
+                AI 解读
+              </p>
+              <h3 className="mt-2 font-serif text-2xl font-semibold text-stone-950">
+                基于框架说明的结果解析
+              </h3>
+            </div>
+            {isGeneratingAiInterpretation ? (
+              <span className="text-sm text-stone-500">正在生成中...</span>
+            ) : null}
+          </div>
+
+          {aiInterpretation ? (
+            <div className="mt-6 grid gap-5">
+              <section className="grid gap-3">
+                <div className="rounded-[1.35rem] border border-stone-200 bg-stone-50/80 p-4">
+                  <p className="text-sm font-semibold text-stone-900">这个结果是什么？</p>
+                  <p className="mt-2 text-sm leading-7 text-stone-700">
+                    {aiInterpretation.resultSummary}
+                  </p>
+                </div>
+                <div className="rounded-[1.35rem] border border-stone-200 bg-stone-50/80 p-4">
+                  <p className="text-sm font-semibold text-stone-900">哲学解释</p>
+                  <p className="mt-2 text-sm leading-7 text-stone-700">
+                    {aiInterpretation.philosophicalExplanation}
+                  </p>
+                </div>
+                <div className="rounded-[1.35rem] border border-stone-200 bg-stone-50/80 p-4">
+                  <p className="text-sm font-semibold text-stone-900">通俗解释</p>
+                  <p className="mt-2 text-sm leading-7 text-stone-700">
+                    {aiInterpretation.simpleExplanation}
+                  </p>
+                </div>
+                <div className="rounded-[1.35rem] border border-stone-200 bg-stone-50/80 p-4">
+                  <p className="text-sm font-semibold text-stone-900">举例说明</p>
+                  <p className="mt-2 text-sm leading-7 text-stone-700">
+                    {aiInterpretation.exampleScenario}
+                  </p>
+                </div>
+              </section>
+
+              <section>
+                <p className="text-sm font-semibold text-stone-900">针对每个维度的解释</p>
+                <div className="mt-3 grid gap-3 md:grid-cols-3">
+                  {aiInterpretation.dimensionInterpretations.map((item) => (
+                    <article
+                      key={item.key}
+                      className="rounded-[1.3rem] bg-gradient-to-br from-stone-100 to-white p-4"
+                    >
+                      <p className="text-xs uppercase tracking-[0.25em] text-stone-500">
+                        {item.label}
+                      </p>
+                      <h4 className="mt-2 text-lg font-semibold text-stone-950">
+                        {item.digit}. {item.title}
+                      </h4>
+                      <p className="mt-3 text-sm leading-7 text-stone-700">
+                        {item.explanation}
+                      </p>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            </div>
+          ) : null}
+
+          {!aiInterpretation && isGeneratingAiInterpretation ? (
+            <div className="mt-6 grid gap-3">
+              <div className="rounded-[1.35rem] border border-stone-200 bg-stone-50/80 p-4 text-sm leading-7 text-stone-600">
+                AI 正在结合框架说明与测试结果生成详细解读，这里会补充“这个结果是什么”“哲学解释”“通俗解释”“举例说明”以及逐维度说明。
+              </div>
+            </div>
+          ) : null}
+
+          {!aiInterpretation && aiError ? (
+            <div className="mt-6 rounded-[1.35rem] border border-red-200 bg-red-50/80 p-4">
+              <p className="text-sm leading-7 text-red-700">{aiError}</p>
+              <button
+                type="button"
+                onClick={retryAiInterpretation}
+                disabled={isGeneratingAiInterpretation}
+                className="mt-4 rounded-full border border-red-300 px-4 py-2 text-sm font-medium text-red-700 transition duration-200 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                重新生成 AI 解读
+              </button>
+            </div>
+          ) : null}
+        </article>
+
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <button
             type="button"
@@ -283,9 +466,6 @@ export default function QuizExperience({ questions }: QuizExperienceProps) {
           <h2 className="mt-4 max-w-3xl text-balance font-serif text-3xl font-semibold leading-tight text-stone-950 sm:text-4xl lg:text-5xl">
             用 24 道判断题，测出你在场域、本体、现象三条轴线上的哲学偏向。
           </h2>
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-stone-700 sm:mt-5 sm:text-base sm:leading-8">
-            题目顺序随机。作答后可随时回到任意题号修改，全部完成后手动提交结果。
-          </p>
         </div>
 
         <div className="rounded-[1.5rem] border border-stone-200/70 bg-white/94 p-5 shadow-[0_18px_60px_rgba(31,24,18,0.07)] sm:rounded-[1.9rem] sm:p-8">
@@ -296,10 +476,16 @@ export default function QuizExperience({ questions }: QuizExperienceProps) {
             这个测试在测什么
           </h3>
           <p className="mt-4 text-sm leading-7 text-stone-700 sm:text-base sm:leading-8">
-            这套框架原本从场域、本体、现象、目的四个维度理解一种哲学立场。当前测试聚焦前三条轴线，也就是你如何看待世界背景、什么算真正存在，以及真实如何向你显现。
+            这套测试基于《主义主义》里提出的一套“四维矩阵”框架。原始框架试图用场域、本体、现象、目的四个维度来描述一种哲学立场，也就是依次回答四个问题：你认为世界背景是什么样的，什么才算真正存在，这些存在如何向人显现，以及人的行动最终朝向什么目标。
           </p>
           <p className="mt-3 text-sm leading-7 text-stone-700 sm:text-base sm:leading-8">
-            不同维度会落在秩序、冲突、中心、虚无等不同要素上，因此结果不是“分高分低”，而是一张关于你理解世界方式的组合画像。
+            当前版本的测试先聚焦前三条轴线，也就是“世界背景”“存在判断”“经验显现”这三部分。也就是说，它更关心你如何理解世界、如何界定真实、如何看待经验，而不直接评估你的最终行动目的。因此结果不是一个价值高低判断，而是一张关于你思考方式的结构画像。
+          </p>
+          <p className="mt-3 text-sm leading-7 text-stone-700 sm:text-base sm:leading-8">
+            在这套框架里，每个维度都可能落在几种不同的基础要素上，例如秩序、冲突、中心、虚无。它们不是单纯的性格标签，而是你在理解世界时更容易倚靠的哲学材料。比如有的人更容易从稳定规则出发，有的人会优先看到结构矛盾，有的人更强调主体经验，也有人更敏感于裂缝、生成和未完成状态。
+          </p>
+          <p className="mt-3 text-sm leading-7 text-stone-700 sm:text-base sm:leading-8">
+            所以最终结果不应该理解成“你得了多少分”，而应该理解成：在场域、本体、现象这三条轴线上，你分别更接近哪一种理解方式。这三个位置组合起来，才构成你当前更接近的哲学倾向。它更像一张地图，而不是一次考试成绩。
           </p>
 
           <div className="mt-6 grid gap-3 md:grid-cols-3">
@@ -366,9 +552,6 @@ export default function QuizExperience({ questions }: QuizExperienceProps) {
               style={{ width: `${progress}%` }}
             />
           </div>
-          <p className="mt-3 text-sm leading-6 text-stone-600 sm:mt-4 sm:leading-7">
-            当前在第 {currentIndex + 1} 题。可以点击左侧题号回到任意题目修改答案。
-          </p>
         </div>
 
         <div className="rounded-[1.45rem] border border-stone-200/70 bg-white/94 p-4 shadow-[0_18px_48px_rgba(31,24,18,0.06)] sm:rounded-[1.7rem] sm:p-5">
