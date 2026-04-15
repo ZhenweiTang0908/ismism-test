@@ -77,6 +77,30 @@ const DIMENSION_TITLE_MAP: Record<
   ],
 };
 
+const DIMENSION_AXIS_EXPLANATION_MAP: Record<
+  DimensionKey,
+  Record<1 | 2 | 3 | 4, string>
+> = {
+  field: {
+    1: "你会先把世界理解成一个先于个人而存在的自然或秩序背景，人的判断和行动通常是在这个既有场域中展开，而不是先从主体意志出发定义世界。",
+    2: "你会把世界看成由深层结构、制度关系和隐藏布置支撑起来的场域，表面发生的事情往往只是更深层安排的一次露面。",
+    3: "你理解世界时更强调主体位置、经验视角和意义参与，场域不是纯粹外在的背景，而总是和观察者的站位一起被组织出来。",
+    4: "你倾向把场域理解为一个可以被行动介入、被冲突改写的开放过程，世界不是静止背景，而是会在实践中持续重组。",
+  },
+  ontology: {
+    1: "你更相信对象、资源、规则和可确认的现实后果具有最坚实的存在资格，存在首先表现为那些能够稳定落地、被外部确认的东西。",
+    2: "你会把关系网络、结构位置和系统性机制视为更深一层的存在，个别对象的重要性往往要放回整体框架里才能被理解。",
+    3: "你更看重主体、观念和内在理解在存在判断中的作用，什么算真实不仅取决于对象本身，也取决于主体如何赋义和确认。",
+    4: "你会把生成、变化、行动和关系流动本身视为存在的核心，真正重要的不是静止实体，而是那些不断生成现实的过程。",
+  },
+  phenomenon: {
+    1: "你更相信经验可以较直接地把现实带到眼前，现象与真实之间虽然不必完全重合，但通常不需要过多中介才能把握。",
+    2: "你会警惕表象背后仍有解释框架、认知路径和符号中介，任何经验都不是直接透明的，而是经过加工和过滤后才出现。",
+    3: "你更重视第一人称体验、心理感受和意义生成的层面，真实如何显现出来，往往要通过主体的感受结构才能被理解。",
+    4: "你对断裂、错位、反讽和未完成状态格外敏感，显现本身就带着裂缝，真实并不会总以平整、完整、统一的方式出现。",
+  },
+};
+
 const DEFAULT_INFO_BY_CODE: Record<
   string,
   {
@@ -167,6 +191,28 @@ const mergeInformativeList = (
   return normalized.length ? normalized : fallback;
 };
 
+const buildAxisInsightList = (
+  dimensionResults: DimensionResult[],
+  rawAxisList: string[] | undefined,
+  fallbackAxisList: string[],
+): string[] =>
+  dimensionResults.map((result, index) => {
+    const rawItem = rawAxisList?.[index]?.trim();
+
+    if (typeof rawItem === "string" && rawItem.length >= 28) {
+      return rawItem;
+    }
+
+    if (typeof rawItem === "string" && rawItem.length >= 4) {
+      return `${rawItem}：${DIMENSION_AXIS_EXPLANATION_MAP[result.key][result.digit]}`;
+    }
+
+    return (
+      fallbackAxisList[index] ??
+      `${DIMENSION_LABELS[result.key]} ${result.digit}：${DIMENSION_AXIS_EXPLANATION_MAP[result.key][result.digit]}`
+    );
+  });
+
 const buildFallbackInfo = (coreCode: string, name: string) => {
   const exact = DEFAULT_INFO_BY_CODE[coreCode];
 
@@ -255,7 +301,11 @@ export const buildQuizResult = ({
     name: preferredName,
     englishName,
     info: {
-      axisList: mergeInformativeList(coreInfo?.axis_list, fallbackInfo.axisList),
+      axisList: buildAxisInsightList(
+        dimensionResults,
+        coreInfo?.axis_list,
+        fallbackInfo.axisList,
+      ),
       featureList: mergeInformativeList(coreInfo?.feature_list, fallbackInfo.featureList),
       examplePeople: isMeaningfulText(coreInfo?.example_people, 4)
         ? coreInfo!.example_people!.trim()
