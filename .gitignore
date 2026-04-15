@@ -25,6 +25,8 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+!website/lib/
+!website/lib/**
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -135,7 +137,6 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
 .envrc
 .venv
 env/
@@ -143,6 +144,12 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.env*
+!.env.example
+!.env.sample
+!.env.template
+!.env.dist
+!.env.local.example
 
 # Spyder project settings
 .spyderproject
@@ -205,3 +212,18 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+
+# next project ignore
+node_modules/
+dist/
+build/
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+.DS_Store
+.next/
+!website/lib/
+!website/lib/**

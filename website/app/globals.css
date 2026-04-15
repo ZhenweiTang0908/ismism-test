@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f6f1ea;
+  --foreground: #1f1812;
+  --paper: rgba(255, 252, 248, 0.76);
+  --accent: #0f766e;
+  --accent-warm: #c2410c;
+  --line: rgba(68, 55, 43, 0.14);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-body);
+  --font-serif: var(--font-display);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 24%),
+    radial-gradient(circle at top, rgba(245, 158, 11, 0.08), transparent 25%),
+    linear-gradient(135deg, rgba(15, 118, 110, 0.04), transparent 28%);
+  font-family: var(--font-body), sans-serif;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(68, 55, 43, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(68, 55, 43, 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(circle at center, black 45%, transparent 100%);
+}
+
+::selection {
+  background: rgba(15, 118, 110, 0.2);
+}
+
+input,
+textarea,
+button {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+.font-serif {
+  font-family: var(--font-display), serif;
+}
