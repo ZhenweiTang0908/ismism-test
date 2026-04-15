@@ -2,7 +2,7 @@
 
 import { startTransition, useState } from "react";
 
-import { AGREEMENT_OPTIONS, DIMENSION_ORDER } from "@/lib/ismism/types";
+import { AGREEMENT_OPTIONS } from "@/lib/ismism/types";
 import type {
   AgreementValue,
   AnswerMap,
@@ -41,17 +41,8 @@ export default function QuizExperience({ questions }: QuizExperienceProps) {
 
   const currentQuestion = questions[currentIndex];
   const answeredCount = Object.keys(answers).length;
-  const progress = phase === "quiz" ? ((currentIndex + 1) / questions.length) * 100 : 0;
-  const dimensionCompletion = DIMENSION_ORDER.map((dimension) => {
-    const scopedQuestions = questions.filter((question) => question.dimension === dimension);
-    const scopedAnswered = scopedQuestions.filter((question) => answers[question.id]).length;
-
-    return {
-      key: dimension,
-      answered: scopedAnswered,
-      total: scopedQuestions.length,
-    };
-  });
+  const progress = phase === "quiz" ? (answeredCount / questions.length) * 100 : 0;
+  const allAnswered = answeredCount === questions.length;
 
   const updateName = (value: string) => {
     setProfile((previous) => ({
@@ -86,7 +77,21 @@ export default function QuizExperience({ questions }: QuizExperienceProps) {
     setCurrentIndex((index) => Math.max(0, index - 1));
   };
 
-  const submitQuiz = async (submittedAnswers: AnswerMap) => {
+  const jumpToQuestion = (index: number) => {
+    if (isSubmitting) {
+      return;
+    }
+
+    setError("");
+    setCurrentIndex(index);
+  };
+
+  const submitQuiz = async () => {
+    if (!allAnswered) {
+      setError("还有题目未作答，完成后才能提交。");
+      return;
+    }
+
     setError("");
     setIsSubmitting(true);
 
@@ -97,7 +102,7 @@ export default function QuizExperience({ questions }: QuizExperienceProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          answers: submittedAnswers,
+          answers,
           respondent: profile,
         }),
       });
@@ -138,14 +143,11 @@ export default function QuizExperience({ questions }: QuizExperienceProps) {
     setAnswers(nextAnswers);
     setError("");
 
-    if (currentIndex === questions.length - 1) {
-      void submitQuiz(nextAnswers);
-      return;
+    if (currentIndex < questions.length - 1) {
+      window.setTimeout(() => {
+        setCurrentIndex((index) => Math.min(index + 1, questions.length - 1));
+      }, 120);
     }
-
-    window.setTimeout(() => {
-      setCurrentIndex((index) => Math.min(index + 1, questions.length - 1));
-    }, 140);
   };
 
   if (phase === "result" && response) {
@@ -278,7 +280,7 @@ export default function QuizExperience({ questions }: QuizExperienceProps) {
             用 24 道判断题，测出你在场域、本体、现象三条轴线上的哲学偏向。
           </h2>
           <p className="mt-5 max-w-2xl text-base leading-8 text-stone-700">
-            选择答案后会自动进入下一题，最后只输出三位结果。
+            题目顺序随机。作答后可随时回到任意题号修改，全部完成后手动提交结果。
           </p>
         </div>
 
@@ -317,14 +319,14 @@ export default function QuizExperience({ questions }: QuizExperienceProps) {
   }
 
   return (
-    <section className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[0.68fr_1.32fr]">
+    <section className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.44fr_1.56fr]">
       <aside className="grid gap-4 self-start lg:sticky lg:top-8">
         <div className="rounded-[1.7rem] border border-stone-200/70 bg-white/94 p-6 shadow-[0_18px_48px_rgba(31,24,18,0.06)]">
           <p className="text-xs uppercase tracking-[0.35em] text-stone-500">
             Progress
           </p>
           <p className="mt-4 text-4xl font-semibold text-stone-950">
-            {currentIndex + 1}
+            {answeredCount}
             <span className="text-lg text-stone-400"> / {questions.length}</span>
           </p>
           <div className="mt-5 h-3 overflow-hidden rounded-full bg-stone-100">
@@ -334,38 +336,46 @@ export default function QuizExperience({ questions }: QuizExperienceProps) {
             />
           </div>
           <p className="mt-4 text-sm leading-7 text-stone-600">
-            已作答 {answeredCount} 题。选择后自动进入下一题。
+            当前在第 {currentIndex + 1} 题。可以点击左侧题号回到任意题目修改答案。
           </p>
         </div>
 
-        <div className="rounded-[1.7rem] border border-stone-200/70 bg-white/94 p-6 shadow-[0_18px_48px_rgba(31,24,18,0.06)]">
-          <p className="text-xs uppercase tracking-[0.35em] text-stone-500">
-            Coverage
-          </p>
-          <div className="mt-4 grid gap-3">
-            {dimensionCompletion.map((item, index) => (
-              <div key={item.key} className="rounded-2xl bg-stone-50 px-4 py-3">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm font-medium text-stone-800">
-                    第 {index + 1} 部分
-                  </span>
-                  <span className="text-sm text-stone-500">
-                    {item.answered}/{item.total}
-                  </span>
-                </div>
-              </div>
-            ))}
+        <div className="rounded-[1.7rem] border border-stone-200/70 bg-white/94 p-5 shadow-[0_18px_48px_rgba(31,24,18,0.06)]">
+          <div className="grid grid-cols-4 gap-2">
+            {questions.map((question, index) => {
+              const answered = Boolean(answers[question.id]);
+              const current = index === currentIndex;
+
+              return (
+                <button
+                  key={question.id}
+                  type="button"
+                  onClick={() => jumpToQuestion(index)}
+                  className={`rounded-2xl border px-0 py-3 text-sm font-medium transition duration-200 ${
+                    current
+                      ? "border-stone-900 bg-stone-900 text-white"
+                      : answered
+                        ? "border-teal-200 bg-teal-50 text-teal-900 hover:border-teal-400"
+                        : "border-stone-200 bg-stone-50 text-stone-600 hover:border-stone-400 hover:bg-white"
+                  }`}
+                >
+                  {index + 1}
+                </button>
+              );
+            })}
           </div>
         </div>
       </aside>
 
       <div className="rounded-[1.95rem] border border-stone-200/70 bg-white/96 p-8 shadow-[0_18px_48px_rgba(31,24,18,0.06)]">
-        <h2 className="font-serif text-4xl leading-tight text-stone-950 lg:text-5xl">
-          {currentQuestion.question}
-        </h2>
-        <p className="mt-5 text-sm leading-7 text-stone-600">
-          请选择你对这句话的认同程度。这里没有标准答案，只看你平时更自然的判断倾向。
-        </p>
+        <div className="min-h-[13rem]">
+          <h2 className="font-serif text-3xl leading-tight text-stone-950 lg:text-4xl">
+            {currentQuestion.question}
+          </h2>
+          <p className="mt-5 text-sm leading-7 text-stone-600">
+            请选择你对这句话的认同程度。这里没有标准答案，只看你平时更自然的判断倾向。
+          </p>
+        </div>
 
         <div className="mt-8 grid gap-3">
           {AGREEMENT_OPTIONS.map((option) => {
@@ -404,11 +414,14 @@ export default function QuizExperience({ questions }: QuizExperienceProps) {
           >
             上一题
           </button>
-          {isSubmitting ? (
-            <div className="rounded-full bg-stone-950 px-5 py-3 text-sm font-medium text-stone-50">
-              正在生成结果...
-            </div>
-          ) : null}
+          <button
+            type="button"
+            onClick={submitQuiz}
+            disabled={!allAnswered || isSubmitting}
+            className="rounded-full bg-stone-950 px-5 py-3 text-sm font-medium text-stone-50 transition duration-200 hover:-translate-y-0.5 hover:bg-stone-800 hover:shadow-[0_10px_24px_rgba(28,25,23,0.18)] active:translate-y-0 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:text-stone-100 disabled:shadow-none"
+          >
+            {isSubmitting ? "正在生成结果..." : "提交结果"}
+          </button>
         </div>
       </div>
     </section>

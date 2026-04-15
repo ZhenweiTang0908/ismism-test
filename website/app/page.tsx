@@ -16,13 +16,13 @@ export default async function Home() {
             </p>
             <h1 className="mt-4 max-w-4xl font-serif text-5xl font-semibold leading-[1.08] text-stone-950 sm:text-6xl lg:text-7xl">
               测一测你在
-              <span className="text-transparent bg-[linear-gradient(120deg,#0f766e,#c2410c)] bg-clip-text">
+              <span className="bg-[linear-gradient(120deg,#0f766e,#c2410c)] bg-clip-text text-transparent">
                 哲学倾向
               </span>
-              上更接近哪一种主义。
+              上更接近哪一种主义
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-8 text-stone-700">
-              24 个判断题，输出你的三位主义定位结果。
+              24 道判断题，测出你在场域、本体、现象三条轴线上的哲学偏向。
             </p>
           </div>
         </header>

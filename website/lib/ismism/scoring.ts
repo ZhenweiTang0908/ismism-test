@@ -24,11 +24,11 @@ const DIMENSION_TITLE_MAP: Record<
   field: [
     {
       title: "秩序场感",
-      summary: "你更容易把世界理解成先验存在、等待进入的稳定框架。",
+      summary: "你更容易把世界理解成先于个人而存在、等待进入的稳定框架。",
     },
     {
       title: "结构场感",
-      summary: "你会注意到表层秩序之外仍有分层、剩余与看不见的布置。",
+      summary: "你会注意到表面秩序之外仍有分层、剩余与看不见的布置。",
     },
     {
       title: "主体场感",
@@ -46,7 +46,7 @@ const DIMENSION_TITLE_MAP: Record<
     },
     {
       title: "结构本位",
-      summary: "你会把深层关系、框架和不易直接看到的力量视为真正关键。",
+      summary: "你会把深层关系、框架和不易直接看见的力量视为真正关键。",
     },
     {
       title: "主体本位",
@@ -77,11 +77,118 @@ const DIMENSION_TITLE_MAP: Record<
   ],
 };
 
+const DEFAULT_INFO_BY_CODE: Record<
+  string,
+  {
+    axisList: string[];
+    featureList: string[];
+    examplePeople: string;
+    simpleStory: string;
+  }
+> = {
+  "1-1-1": {
+    axisList: [
+      "场域上更倾向把世界理解为先于个人而存在的稳定秩序。",
+      "本体上更信任可落地、可验证、能产生现实后果的存在。",
+      "现象上更相信经验能够较直接地呈现真实。",
+    ],
+    featureList: [
+      "判断问题时优先看规则、资源和现实约束，而不是先看解释姿态。",
+      "更容易把复杂局面拆成可以确认的事实、位置和可执行条件。",
+      "对模糊叙事和抽象宣言保持距离，更在意什么真正有效。",
+    ],
+    examplePeople: "更像务实的现实观察者、制度分析者或经验主义者。",
+    simpleStory:
+      "你通常先确认世界如何运转，再决定自己站在哪里。比起宏大解释，你更相信已经摆在眼前、能持续起作用的秩序、资源和事实。",
+  },
+  "2-2-2": {
+    axisList: [
+      "场域上会注意表面秩序背后还有更深一层的结构安排。",
+      "本体上更相信关系、框架和系统位置比孤立对象更关键。",
+      "现象上意识到经验总会经过解释、中介和视角过滤。",
+    ],
+    featureList: [
+      "会本能地追问规则从何而来，以及谁在背后决定分配方式。",
+      "看到的不只是谁说了什么，还会去看结构如何让某些说法更有力量。",
+      "面对复杂问题时，倾向从隐藏机制而非表面冲突出发。",
+    ],
+    examplePeople: "更像结构分析者、制度批判者或关系网络的解读者。",
+    simpleStory:
+      "你不太满足于接受表面现象，而是会进一步追问：是什么结构让事情只能这样发生。你对隐藏机制、位置差异和中介过程尤其敏感。",
+  },
+  "3-3-3": {
+    axisList: [
+      "场域上更强调主体的立场、反思能力和介入方式。",
+      "本体上会把观念、自我理解和主体现身看得更重要。",
+      "现象上更重视第一人称经验、意义生成与内在感受。",
+    ],
+    featureList: [
+      "判断问题时会先校准自己站在什么位置上理解它。",
+      "不把世界当成纯粹外在对象，而会反问主体如何参与了定义过程。",
+      "相比现成答案，更在意意义如何被体验、确认与承担。",
+    ],
+    examplePeople: "更像反思型主体、意义追问者或体验导向的哲学读者。",
+    simpleStory:
+      "你会不断把问题带回主体自身：我如何理解、如何确认、如何承担。对你来说，意义不是现成摆在那里，而是在反思和体验中逐步成立。",
+  },
+  "4-4-4": {
+    axisList: [
+      "场域上更把世界视为可被行动重新组织的开放过程。",
+      "本体上更重视生成、关系变化和持续实践中的存在。",
+      "现象上对裂缝、偏差和未完成状态保持高度敏感。",
+    ],
+    featureList: [
+      "不会把秩序视为终点，更关心怎样通过行动改写它。",
+      "能接受不确定性，并把变化本身看作真实的一部分。",
+      "当现成框架失效时，更愿意进入实践、试错与重组。",
+    ],
+    examplePeople: "更像行动导向者、实践改造者或生成视角的思考者。",
+    simpleStory:
+      "你不满足于解释世界已经是什么样，而更关心如何把它推向新的形态。对你来说，现实不是封闭成品，而是正在被行动持续改写的过程。",
+  },
+};
+
 const round = (value: number) => Math.round(value * 100) / 100;
 
 const toDigit = (ratio: number): 1 | 2 | 3 | 4 => {
   const bounded = Math.min(0.999999, Math.max(0, ratio));
   return (Math.floor(bounded * 4) + 1) as 1 | 2 | 3 | 4;
+};
+
+const isMeaningfulText = (value?: string | null, minimumLength = 8) =>
+  typeof value === "string" && value.trim().length >= minimumLength;
+
+const mergeInformativeList = (
+  list: string[] | undefined,
+  fallback: string[],
+  minimumLength = 8,
+) => {
+  const normalized = (list ?? []).filter((item) => isMeaningfulText(item, minimumLength));
+  return normalized.length ? normalized : fallback;
+};
+
+const buildFallbackInfo = (coreCode: string, name: string) => {
+  const exact = DEFAULT_INFO_BY_CODE[coreCode];
+
+  if (exact) {
+    return exact;
+  }
+
+  return {
+    axisList: [
+      "这个结果表示你在场域、本体、现象三条轴线上形成了一种组合式倾向。",
+      "你不会只依赖单一视角，而是在结构、存在和经验之间做自己的权衡。",
+      "最终编码不是标签本身，而是你处理世界方式的一种压缩表达。",
+    ],
+    featureList: [
+      "会根据情境在不同理解框架之间切换，不轻易被单一说法固定。",
+      "既关注现实条件，也会注意经验视角和行动方式如何改变判断。",
+      `相较于套用标准答案，你更像在发展一种属于自己的 ${name} 姿态。`,
+    ],
+    examplePeople: "更像一种仍在生成中的思想姿态，而不是单一典型人物。",
+    simpleStory:
+      "你的结果不是落进一个狭窄标签，而是显示出多条哲学轴线的交汇方式。你理解世界时，会在现实条件、主观体验和行动可能性之间寻找自己的重心。",
+  };
 };
 
 export const getAnswerLabel = (value: AgreementValue) =>
@@ -130,7 +237,6 @@ export const buildQuizResult = ({
   );
 
   const coreCode = dimensionResults.map((result) => result.digit).join("-");
-
   const coreInfo = enhancedCatalog[coreCode];
   const englishName = coreInfo?.en_name || "";
 
@@ -139,6 +245,7 @@ export const buildQuizResult = ({
   const clientId = now * 10_000 + randomSuffix;
 
   const preferredName = coreInfo?.ch_name || `${coreCode} 型哲学倾向`;
+  const fallbackInfo = buildFallbackInfo(coreCode, preferredName);
 
   return {
     clientId,
@@ -148,12 +255,14 @@ export const buildQuizResult = ({
     name: preferredName,
     englishName,
     info: {
-      axisList: coreInfo?.axis_list ?? [],
-      featureList: coreInfo?.feature_list?.filter(Boolean) ?? [],
-      examplePeople: coreInfo?.example_people ?? "",
-      simpleStory:
-        coreInfo?.simple_story ||
-        "你的结果更像是一种仍在生成中的哲学姿态，说明你会在结构、存在与经验之间持续寻找自己的稳定位置。",
+      axisList: mergeInformativeList(coreInfo?.axis_list, fallbackInfo.axisList),
+      featureList: mergeInformativeList(coreInfo?.feature_list, fallbackInfo.featureList),
+      examplePeople: isMeaningfulText(coreInfo?.example_people, 4)
+        ? coreInfo!.example_people!.trim()
+        : fallbackInfo.examplePeople,
+      simpleStory: isMeaningfulText(coreInfo?.simple_story, 20)
+        ? coreInfo!.simple_story!.trim()
+        : fallbackInfo.simpleStory,
     },
   };
 };

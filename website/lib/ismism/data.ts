@@ -23,6 +23,20 @@ type RawQuestion = {
 
 const COLLATOR = new Intl.Collator("zh-CN", { numeric: true, sensitivity: "base" });
 
+const shuffleQuestions = (questions: QuizQuestion[]) => {
+  const randomized = [...questions];
+
+  for (let index = randomized.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [randomized[index], randomized[swapIndex]] = [
+      randomized[swapIndex],
+      randomized[index],
+    ];
+  }
+
+  return randomized;
+};
+
 const QUIZ_BLUEPRINT: Record<DimensionKey, QuestionType[]> = {
   field: [
     "abstract",
@@ -158,12 +172,12 @@ export const getQuizQuestions = async () => {
       .map(([id, rawQuestion]) => normalizeDatasetQuestion(id, rawQuestion))
       .filter((question): question is QuizQuestion => question !== null);
 
-    return DIMENSION_ORDER.flatMap((dimension) =>
+    return shuffleQuestions(DIMENSION_ORDER.flatMap((dimension) =>
       buildDimensionQuestionSet(
         dimension,
         normalized.filter((question) => question.dimension === dimension),
       ),
-    );
+    ));
   })();
 
   return questionsPromise;
