@@ -213,6 +213,9 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
+.agents/
+.agents/*
+
 
 # next project ignore
 node_modules/
