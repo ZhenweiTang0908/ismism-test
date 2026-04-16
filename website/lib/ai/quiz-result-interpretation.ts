@@ -98,14 +98,17 @@ export const loadOverviewText = async () => {
 };
 
 const buildSystemPrompt = () => `
-你是一个严谨、清晰的中文哲学测评解释器。你会根据给定的框架说明 overview 和具体测评结果，生成一份结构化 AI 解读。
+你是一个严谨、清晰、但面向普通用户的中文测评解释器。你会根据给定的框架说明 overview 和具体测评结果，生成一份结构化 AI 解读。
 
 要求：
 1. 只根据用户提供的 overview 和测评结果解释，不要编造额外史实，不要输出分数、百分比或高低优劣判断。
 2. 把结果解释成“理解世界的方式组合”，而不是考试成绩。
-3. 语言要同时兼顾哲学准确性和普通读者可读性。
-4. 返回必须是 JSON 对象，不要包含 Markdown 代码块，不要输出额外说明。
-5. JSON 结构必须包含以下字段：
+3. 语言要明显偏日常、偏口语，优先让没学过哲学的普通用户也能读懂。
+4. 可以保留必要概念，但不要堆术语；如果提到概念，要立刻用普通话解释清楚。
+5. 不要照抄输入里的学术表达，不要把原文换个说法再重复一遍。
+6. 每段都先说“这大概是什么意思”，再补充框架上的理解。
+7. 返回必须是 JSON 对象，不要包含 Markdown 代码块，不要输出额外说明。
+8. JSON 结构必须包含以下字段：
 {
   "resultSummary": "这个结果是什么",
   "philosophicalExplanation": "哲学解释",
@@ -117,8 +120,8 @@ const buildSystemPrompt = () => `
     }
   ]
 }
-6. dimensionInterpretations 必须严格返回 3 项，顺序与输入结果中的 dimensionResults 一致。
-7. 每段都要写得充实一些，避免空泛套话。
+9. dimensionInterpretations 必须严格返回 3 项，顺序与输入结果中的 dimensionResults 一致。
+10. 每段都要写得充实一些，避免空泛套话。
 `.trim();
 
 const buildUserPrompt = (overviewText: string, result: QuizResult) =>
@@ -219,16 +222,16 @@ const getLongText = (
 };
 
 const buildFallbackInterpretation = (result: QuizResult): QuizResultAiInterpretation => ({
-  resultSummary: `${result.name}（${result.coreCode}）表示你在场域、本体、现象三条轴线上形成了一种稳定的组合倾向。这个结果更像一张哲学位置图，说明你理解世界时会优先依赖哪些判断路径。`,
-  philosophicalExplanation: `从哲学上看，这个结果并不是把你归入某个单一流派，而是把你放进一个三维框架中观察：你如何理解世界背景、如何判断什么是真实存在的、以及你认为真实如何向人显现。${result.name} 代表的是这三种判断方式叠加后的整体姿态。`,
-  simpleExplanation: `如果用更通俗的话说，这个结果说明你看问题时有一套比较固定的“默认模式”。你会更自然地从某些角度理解现实，例如更看重结构还是主体、更相信直观经验还是中介解释。`,
-  exampleScenario: `比如遇到一条社会规则时，你不只是判断它好不好用，而会连带去想：它背后的世界背景是什么、真正起作用的东西到底是什么、以及人是如何感受到它的。你的结果反映的就是这套连贯的理解路径。`,
+  resultSummary: `${result.name}（${result.coreCode}）表示你看世界时，通常会沿着一套比较稳定的思路走。它不是在说你好或不好，而是在描述你更自然会从哪些角度理解现实。`,
+  philosophicalExplanation: `放到这套测试里看，这个结果的意思是：你对“世界是什么样”“什么最重要”“人是怎么感受到现实的”这三件事，有一组彼此能接上的倾向。它不是把你塞进某个学派，而是在总结你更常用的理解方式。`,
+  simpleExplanation: `换成大白话，这就像你脑子里有一套默认的看问题方法。遇到一件事时，你会比较自然地先看哪些部分、相信哪些东西更关键、又会从什么地方感觉到“这件事到底是怎么回事”。`,
+  exampleScenario: `比如面对一条新规则，有的人先看它合不合理，有的人先看是谁定的，有的人先看自己有什么感觉。你的结果就是在说明，你通常更像哪一种人，以及这几种判断会怎么连起来。`,
   dimensionInterpretations: result.dimensionResults.map((item) => ({
     key: item.key,
     label: item.label,
     digit: item.digit,
     title: item.title,
-    explanation: `${item.label}维度上，你目前落在 ${item.digit}.${item.title}。这意味着 ${item.summary} 这不是单一观点的复述，而是说明你在这一条轴线上更容易以这种方式组织判断。`,
+    explanation: `在${item.label}这一块，你更接近“${item.title}”。简单说就是：${item.summary} 也就是说，你在这一条线上做判断时，更容易先从这个方向切进去。`,
   })),
 });
 

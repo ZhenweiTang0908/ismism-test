@@ -83,6 +83,7 @@ export type DimensionResult = {
   maxScore: number;
   percentage: number;
   digit: 1 | 2 | 3 | 4;
+  marker: string;
   title: string;
   summary: string;
 };

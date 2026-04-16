@@ -17,62 +17,69 @@ const AGREEMENT_RATIO_MAP = Object.fromEntries(
   AGREEMENT_OPTIONS.map((option) => [option.value, option.ratio]),
 ) as Record<AgreementValue, number>;
 
+const DIGIT_MARKER_MAP: Record<1 | 2 | 3 | 4, string> = {
+  1: "秩序",
+  2: "冲突",
+  3: "调和",
+  4: "虚无",
+};
+
 const DIMENSION_TITLE_MAP: Record<
   DimensionKey,
   Array<{ title: string; summary: string }>
 > = {
   field: [
     {
-      title: "秩序场感",
-      summary: "你更容易把世界理解成先于个人而存在、等待进入的稳定框架。",
+      title: "规则优先",
+      summary: "你更容易把世界看成一套先在的规则和秩序，人通常是在里面找位置。",
     },
     {
-      title: "结构场感",
-      summary: "你会注意到表面秩序之外仍有分层、剩余与看不见的布置。",
+      title: "结构优先",
+      summary: "你会先注意表面背后的安排、关系和看不见的框架。",
     },
     {
-      title: "主体场感",
-      summary: "你倾向从立场、意识和主体位置出发理解整体环境。",
+      title: "视角优先",
+      summary: "你理解世界时更看重人的立场、感受和站位。",
     },
     {
-      title: "实践场感",
-      summary: "你更把世界视作需要介入、改写和重新组织的行动场。",
+      title: "行动优先",
+      summary: "你更把世界看成能被行动改变的过程，而不是固定背景。",
     },
   ],
   ontology: [
     {
-      title: "对象本位",
-      summary: "你更相信客观资源、规则与可落地对象具有最硬的存在分量。",
+      title: "看重硬东西",
+      summary: "你更相信资源、规则、对象这些能落地的东西最真实。",
     },
     {
-      title: "结构本位",
-      summary: "你会把深层关系、框架和不易直接看见的力量视为真正关键。",
+      title: "看重深层关系",
+      summary: "你觉得真正起作用的往往是关系、结构和位置。",
     },
     {
-      title: "主体本位",
-      summary: "你更看重观念、自我立场和主体性在存在判断中的位置。",
+      title: "看重主体判断",
+      summary: "你更重视人的理解、立场和赋予意义的能力。",
     },
     {
-      title: "生成本位",
-      summary: "你倾向把行动、关系和持续生成的过程视为真正存在的东西。",
+      title: "看重生成变化",
+      summary: "你更相信变化、行动和形成中的过程才最关键。",
     },
   ],
   phenomenon: [
     {
-      title: "直观显现",
-      summary: "你较相信经验能把现实较直接地呈现在人面前。",
+      title: "相信眼前经验",
+      summary: "你较相信现实能比较直接地呈现在经验里。",
     },
     {
-      title: "中介显现",
-      summary: "你会警惕表象背后仍有解释层和认识过程在塑形。",
+      title: "觉得经验有过滤",
+      summary: "你会觉得人看到的东西总是经过解释和加工。",
     },
     {
-      title: "体验显现",
-      summary: "你更重视第一人称感受、意义构造与主观经验的分量。",
+      title: "重视个人感受",
+      summary: "你更看重第一人称感受和意义体验。",
     },
     {
-      title: "裂缝显现",
-      summary: "你更敏感于错位、反讽、断裂和无法被彻底整合的显现方式。",
+      title: "对裂缝更敏感",
+      summary: "你更容易从矛盾、错位和不顺的地方理解真实。",
     },
   ],
 };
@@ -123,7 +130,7 @@ const DEFAULT_INFO_BY_CODE: Record<
     ],
     examplePeople: "更像务实的现实观察者、制度分析者或经验主义者。",
     simpleStory:
-      "你通常先确认世界如何运转，再决定自己站在哪里。比起宏大解释，你更相信已经摆在眼前、能持续起作用的秩序、资源和事实。",
+      "公司突然改了报销流程，老周先把新规定从头到尾看了一遍，再把能报什么、不能报什么、最晚什么时候交逐条记下来。别人还在讨论这套制度到底合不合理，他已经开始核对自己手里的票据够不够、流程卡不卡。对他来说，先把真正起作用的条件摸清，比先谈大道理更重要。",
   },
   "2-2-2": {
     axisList: [
@@ -138,7 +145,7 @@ const DEFAULT_INFO_BY_CODE: Record<
     ],
     examplePeople: "更像结构分析者、制度批判者或关系网络的解读者。",
     simpleStory:
-      "你不太满足于接受表面现象，而是会进一步追问：是什么结构让事情只能这样发生。你对隐藏机制、位置差异和中介过程尤其敏感。",
+      "部门里突然传出要裁员，有的人只盯着公告本身，小陈却先去打听：是谁卡了预算，哪个部门先缩编，为什么有些岗位总是先被动到。对他来说，表面那张通知还不是全部，真正关键的是背后那套关系是怎么转起来的。",
   },
   "3-3-3": {
     axisList: [
@@ -153,7 +160,7 @@ const DEFAULT_INFO_BY_CODE: Record<
     ],
     examplePeople: "更像反思型主体、意义追问者或体验导向的哲学读者。",
     simpleStory:
-      "你会不断把问题带回主体自身：我如何理解、如何确认、如何承担。对你来说，意义不是现成摆在那里，而是在反思和体验中逐步成立。",
+      "小明每天上同一班车、做差不多的工作，起初总觉得生活在重复。后来他慢慢换了个想法：既然这一天总要来，那就尽量把它过成自己愿意点头的一天。于是他不再老想着逃走，而是学着把眼前的每一次选择都当成真正要负责的事。",
   },
   "4-4-4": {
     axisList: [
@@ -168,7 +175,7 @@ const DEFAULT_INFO_BY_CODE: Record<
     ],
     examplePeople: "更像行动导向者、实践改造者或生成视角的思考者。",
     simpleStory:
-      "你不满足于解释世界已经是什么样，而更关心如何把它推向新的形态。对你来说，现实不是封闭成品，而是正在被行动持续改写的过程。",
+      "团队里一个老流程明显拖慢效率，老李没有只停在抱怨上，也没有等别人先拍板。他先拉了两个人试一个新办法，哪里不顺就当场改。对他来说，事情不是固定摆在那里的，而是可以在做的过程中一点点被改出来。",
   },
 };
 
@@ -213,7 +220,50 @@ const buildAxisInsightList = (
     );
   });
 
-const buildFallbackInfo = (coreCode: string, name: string) => {
+const buildFallbackSimpleStory = (dimensionResults: DimensionResult[]) => {
+  const field = dimensionResults.find((item) => item.key === "field")?.digit ?? 2;
+  const ontology = dimensionResults.find((item) => item.key === "ontology")?.digit ?? 2;
+  const phenomenon = dimensionResults.find((item) => item.key === "phenomenon")?.digit ?? 2;
+
+  const fieldOpeners: Record<1 | 2 | 3 | 4, string> = {
+    1: "老周先把新规定从头到尾看了一遍，想先弄清楚规则到底怎么改了。",
+    2: "老周没有只看通知，而是先去打听这套安排是谁在推动、卡点到底在哪一层。",
+    3: "老周先想，自己为什么会对这件事这么敏感，自己站在什么位置上在看它。",
+    4: "老周没把它当成既成事实，而是先想能不能拉几个人试着把它改掉。",
+  };
+
+  const ontologyFocus: Record<1 | 2 | 3 | 4, string> = {
+    1: "他最关心的，是预算、权限、时间和手里到底有没有资源。",
+    2: "他最关心的，是部门之间怎么连着、谁卡着谁、谁其实说了算。",
+    3: "他最关心的，是不同的人怎么理解这件事、愿不愿意买账。",
+    4: "他最关心的，是事情接下来会怎么变，能不能在推进里把局面慢慢做出来。",
+  };
+
+  const phenomenonCloser: Record<1 | 2 | 3 | 4, string> = {
+    1: "所以他会先看眼前已经发生了什么，再决定下一步。",
+    2: "所以他总觉得光看表面不够，还得看看哪些条件被藏起来了。",
+    3: "所以他也很在意现场每个人真实的感受和反应。",
+    4: "所以他最先盯住的，常常是那些前后对不上的地方。",
+  };
+
+  return `比如公司突然换了一套考核办法，很多人只看通知本身。${fieldOpeners[field]}${ontologyFocus[ontology]}${phenomenonCloser[phenomenon]}`;
+};
+
+const buildFallbackExamplePeople = (dimensionResults: DimensionResult[]) => {
+  const field = dimensionResults.find((item) => item.key === "field")?.title ?? "规则优先";
+  const ontology =
+    dimensionResults.find((item) => item.key === "ontology")?.title ?? "看重硬东西";
+  const phenomenon =
+    dimensionResults.find((item) => item.key === "phenomenon")?.title ?? "相信眼前经验";
+
+  return `一个遇事会先从“${field}”切进去、判断时偏向“${ontology}”、同时又带着“${phenomenon}”习惯的人。`;
+};
+
+const buildFallbackInfo = (
+  coreCode: string,
+  name: string,
+  dimensionResults: DimensionResult[],
+) => {
   const exact = DEFAULT_INFO_BY_CODE[coreCode];
 
   if (exact) {
@@ -231,9 +281,8 @@ const buildFallbackInfo = (coreCode: string, name: string) => {
       "既关注现实条件，也会注意经验视角和行动方式如何改变判断。",
       `相较于套用标准答案，你更像在发展一种属于自己的 ${name} 姿态。`,
     ],
-    examplePeople: "更像一种仍在生成中的思想姿态，而不是单一典型人物。",
-    simpleStory:
-      "你的结果不是落进一个狭窄标签，而是显示出多条哲学轴线的交汇方式。你理解世界时，会在现实条件、主观体验和行动可能性之间寻找自己的重心。",
+    examplePeople: buildFallbackExamplePeople(dimensionResults),
+    simpleStory: buildFallbackSimpleStory(dimensionResults),
   };
 };
 
@@ -264,6 +313,7 @@ const buildDimensionResult = (
     maxScore: round(maxScore),
     percentage,
     digit,
+    marker: DIGIT_MARKER_MAP[digit],
     title: copy.title,
     summary: copy.summary,
   };
@@ -291,7 +341,7 @@ export const buildQuizResult = ({
   const clientId = now * 10_000 + randomSuffix;
 
   const preferredName = coreInfo?.ch_name || `${coreCode} 型哲学倾向`;
-  const fallbackInfo = buildFallbackInfo(coreCode, preferredName);
+  const fallbackInfo = buildFallbackInfo(coreCode, preferredName, dimensionResults);
 
   return {
     clientId,
