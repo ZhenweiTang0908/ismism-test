@@ -13,8 +13,8 @@ export const DIMENSION_LABELS: Record<DimensionKey, string> = {
 };
 
 export const QUESTION_TYPE_WEIGHTS = {
-  abstract: 1.5,
-  personal: 2,
+  abstract: 1,
+  personal: 1,
   art: 1,
 } as const;
 
@@ -105,7 +105,6 @@ export type QuizResult = {
 
 export type QuizResultAiInterpretation = {
   resultSummary: string;
-  philosophicalExplanation: string;
   simpleExplanation: string;
   exampleScenario: string;
   dimensionInterpretations: Array<{

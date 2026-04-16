@@ -36,16 +36,23 @@ const optionToneMap: Record<AgreementValue, string> = {
 const FRAMEWORK_DIMENSIONS = [
   {
     title: "场域",
-    body: "它讨论你如何理解世界的背景系统。这里不是把世界看成一个抽象大词，而是追问：事物到底是在什么样的整体关系网里发生的。你更可能先看到稳定秩序、深层结构、主体视角，还是一个需要行动介入的实践场。",
+    body: "世界是什么样",
   },
   {
     title: "本体",
-    body: "它讨论什么才算真正存在。是对象、资源、制度这些可确认的东西更根本，还是关系结构、主体观念、生成过程更关键。换句话说，它在追问你的“存在清单”到底由什么构成。",
+    body: "自我如何存在",
   },
   {
     title: "现象",
-    body: "它讨论真实如何向人显现。你更信任直观经验，还是认为一切经验都经过中介和解释；你更看重第一人称体验，还是对裂缝、错位、反讽和未完成状态更敏感。",
+    body: "如何认识世界",
   },
+] as const;
+
+const DIGIT_MEANING_CARDS = [
+  { digit: "1", label: "秩序", note: "规则先在" },
+  { digit: "2", label: "冲突", note: "结构张力" },
+  { digit: "3", label: "调和", note: "主体参与" },
+  { digit: "4", label: "虚无", note: "生成变化" },
 ] as const;
 
 const dimensionToneMap = {
@@ -66,12 +73,64 @@ const dimensionToneMap = {
   },
 } as const;
 
-const digitToneMap = {
-  1: "border-amber-200 bg-amber-50 text-amber-950",
-  2: "border-orange-200 bg-orange-50 text-orange-950",
-  3: "border-emerald-200 bg-emerald-50 text-emerald-950",
-  4: "border-stone-300 bg-stone-100 text-stone-950",
+const conciseDimensionLabelMap = {
+  field: "场域",
+  ontology: "本体",
+  phenomenon: "认识",
 } as const;
+
+const dimensionCaptionMap = {
+  field: "世界是什么样",
+  ontology: "事物怎么存在",
+  phenomenon: "怎么认识世界",
+} as const;
+
+const fieldDigitMeaningMap: Record<
+  1 | 2 | 3 | 4,
+  {
+    name: string;
+    blurb: string;
+    body: string;
+  }
+> = {
+  1: {
+    name: "实在论",
+    blurb: "世界先在那里，人先去面对它。",
+    body: "如果第一个数字更接近 1，你通常会先把世界理解成一个本来就存在的现实背景。对象、环境、外部条件和既有秩序先于个人而存在，人需要先面对它、认识它，再决定怎么行动。",
+  },
+  2: {
+    name: "形而上学",
+    blurb: "眼前发生的事，背后还有更深的结构。",
+    body: "如果第一个数字更接近 2，你往往不会停在表面现象，而会追问更底层的原则、结构和本质。你会觉得世界不是一堆散乱事件，而是有一套更深的安排在支撑它。",
+  },
+  3: {
+    name: "观念论",
+    blurb: "世界总和人的理解方式绑在一起。",
+    body: "如果第一个数字更接近 3，你更容易把世界看成离不开主体视角、意义和解释的背景。对你来说，世界不是一块完全独立的冷背景，它总会通过人的理解、意识和立场被组织起来。",
+  },
+  4: {
+    name: "唯物主义",
+    blurb: "世界要在现实条件和实践里把握。",
+    body: "如果第一个数字更接近 4，你更容易把世界理解成一个需要进入其中、在关系和实践里把握的现实场。你会更在意具体条件、行动过程以及现实是怎样被改变的，而不是只停在抽象原则上。",
+  },
+};
+
+const splitExamplePeople = (value: string) => {
+  const trimmed = value.trim();
+  const match = trimmed.match(/^([^：:]+)[：:]\s*(.+)$/);
+
+  if (!match) {
+    return {
+      name: trimmed,
+      description: "",
+    };
+  }
+
+  return {
+    name: match[1]?.trim() ?? trimmed,
+    description: match[2]?.trim() ?? "",
+  };
+};
 
 const requestAiInterpretation = async (result: QuizResult) => {
   const response = await fetch("/api/quiz/explain", {
@@ -91,6 +150,26 @@ const requestAiInterpretation = async (result: QuizResult) => {
   }
 
   return payload.interpretation;
+};
+
+const requestPreviewResult = async (accessKey: string, coreCode: string) => {
+  const response = await fetch("/api/quiz/preview", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ accessKey, coreCode }),
+  });
+
+  const payload = (await response.json()) as SubmitQuizResponse & {
+    error?: string;
+  };
+
+  if (!response.ok || !payload.result) {
+    throw new Error(payload.error || "测试结果打开失败，请稍后再试。");
+  }
+
+  return payload;
 };
 
 export default function QuizExperience({ questions }: QuizExperienceProps) {
@@ -113,6 +192,10 @@ export default function QuizExperience({ questions }: QuizExperienceProps) {
   const remainingCount = questions.length - answeredCount;
   const progress = phase === "quiz" ? (answeredCount / questions.length) * 100 : 0;
   const allAnswered = answeredCount === questions.length;
+  const examplePeopleDisplay = response?.result?.info.examplePeople
+    ? splitExamplePeople(response.result.info.examplePeople)
+    : { name: "暂无典型人物", description: "" };
+  const fieldResult = response?.result?.dimensionResults.find((item) => item.key === "field") ?? null;
 
   const updateName = (value: string) => {
     setProfile((previous) => ({
@@ -157,6 +240,38 @@ export default function QuizExperience({ questions }: QuizExperienceProps) {
 
     setError("");
     setCurrentIndex(index);
+  };
+
+  const openPreviewResult = async () => {
+    const accessKey = window.prompt("请输入测试密钥");
+    if (accessKey === null) {
+      return;
+    }
+
+    const coreCode = window.prompt("请输入结果代码，例如 1-1-1");
+    if (coreCode === null) {
+      return;
+    }
+
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+      const payload = await requestPreviewResult(accessKey, coreCode);
+
+      startTransition(() => {
+        setResponse(payload);
+        setPhase("result");
+      });
+    } catch (previewError) {
+      setError(
+        previewError instanceof Error
+          ? previewError.message
+          : "测试结果打开失败，请稍后再试。",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const submitQuiz = async () => {
@@ -287,63 +402,118 @@ export default function QuizExperience({ questions }: QuizExperienceProps) {
   if (phase === "result" && response) {
     return (
       <section className="grid w-full gap-4 sm:gap-5">
-        <article className="rounded-[1.6rem] border border-stone-200/70 bg-[linear-gradient(135deg,rgba(255,252,248,0.98),rgba(255,247,237,0.92)_42%,rgba(240,253,250,0.88))] p-5 shadow-[0_24px_72px_rgba(31,24,18,0.08)] sm:rounded-[2rem] sm:p-7">
-          <h2
-            className="break-keep whitespace-nowrap font-serif text-[clamp(4rem,12vw,7.2rem)] font-semibold leading-none tracking-[-0.05em] text-stone-950"
-            aria-label={`结果代码 ${response.result.coreCode}`}
-          >
-            {response.result.coreCode}
-          </h2>
+        <article className="overflow-hidden rounded-[1.6rem] border border-stone-200/70 bg-[linear-gradient(135deg,rgba(255,252,248,0.98),rgba(255,247,237,0.92)_42%,rgba(240,253,250,0.88))] p-5 shadow-[0_24px_72px_rgba(31,24,18,0.08)] sm:rounded-[2rem] sm:p-7">
+          <p className="text-xs uppercase tracking-[0.35em] text-stone-500">测试结果</p>
 
-          <div className="mt-4">
-            <p className="text-2xl font-medium text-stone-950 sm:text-3xl">
-              {response.result.name}
-            </p>
-            {response.result.englishName ? (
-              <p className="mt-2 text-sm text-stone-500">{response.result.englishName}</p>
-            ) : null}
+          <div className="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(20rem,0.95fr)] lg:gap-8 lg:items-stretch">
+            <div className="flex min-h-full flex-col justify-between">
+              <h2
+                className="break-keep whitespace-nowrap font-serif text-[clamp(4rem,12vw,7.2rem)] font-semibold leading-none tracking-[-0.05em] text-stone-950"
+                aria-label={`结果代码 ${response.result.coreCode}`}
+              >
+                {response.result.coreCode}
+              </h2>
+
+              <div className="mt-5 max-w-[26rem]">
+                <p className="text-[2.2rem] font-semibold leading-tight text-stone-950 sm:text-[2.8rem]">
+                  {response.result.name}
+                </p>
+                {response.result.englishName ? (
+                  <p className="mt-3 text-sm uppercase tracking-[0.28em] text-stone-500">
+                    {response.result.englishName}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="flex min-h-full items-end">
+              <div className="w-full rounded-[1.45rem] border border-white/80 bg-white/55 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] backdrop-blur-[2px] sm:p-6">
+                <div className="h-1 w-14 rounded-full bg-[linear-gradient(90deg,rgba(217,119,6,0.7),rgba(13,148,136,0.5))]" />
+                <p className="mt-5 text-[1.95rem] font-semibold leading-tight text-stone-950 sm:text-[2.2rem]">
+                  {examplePeopleDisplay.name}
+                </p>
+                {examplePeopleDisplay.description ? (
+                  <p className="mt-3 max-w-[28rem] text-[1.02rem] leading-8 text-stone-700 sm:text-[1.08rem]">
+                    {examplePeopleDisplay.description}
+                  </p>
+                ) : null}
+
+                <div className="mt-5 grid gap-2.5 sm:grid-cols-3">
+                  {response.result.dimensionResults.map((item) => (
+                    <div
+                      key={item.key}
+                      className="rounded-[1.1rem] border border-stone-200/80 bg-white/78 px-4 py-3.5"
+                    >
+                      <p className="text-base font-semibold text-stone-900">
+                        {conciseDimensionLabelMap[item.key]}
+                      </p>
+                      <p className="mt-1 whitespace-nowrap text-sm leading-6 text-stone-500">
+                        {dimensionCaptionMap[item.key]}
+                      </p>
+                      <p className="mt-3 text-[1.15rem] font-semibold text-stone-900">
+                        {item.marker}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
-
-          <p className="mt-5 text-sm leading-7 text-stone-600 sm:text-base">
-            1 = 秩序　2 = 冲突　3 = 调和　4 = 虚无
-          </p>
         </article>
 
-        <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
-          <article className="rounded-[1.5rem] border border-stone-200/80 bg-white/92 p-5 shadow-[0_14px_36px_rgba(43,33,23,0.05)] sm:p-6">
-            <h3 className="text-lg font-medium text-stone-950">举个生活里的例子</h3>
-            <p className="mt-4 text-sm leading-8 text-stone-700 sm:text-[15px]">
-              {response.result.info.simpleStory}
+        {fieldResult ? (
+          <article className="rounded-[1.5rem] border border-stone-200/80 bg-white/92 p-5 shadow-[0_14px_36px_rgba(43,33,23,0.05)] sm:rounded-[1.8rem] sm:p-7">
+            <h3 className="font-serif text-2xl font-semibold text-stone-950">第一个数字</h3>
+            <p className="mt-4 text-[15px] leading-8 text-stone-700">
+              第一个数字是场域，也是这套结果里最先看的因素。它回答的其实是：你默认觉得世界背景是什么样。很多后面的判断，都会先被这个底色影响。
             </p>
+
+            <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              {([1, 2, 3, 4] as const).map((digit) => {
+                const meaning = fieldDigitMeaningMap[digit];
+                const isActive = fieldResult.digit === digit;
+
+                return (
+                  <article
+                    key={digit}
+                    className={`rounded-[1.25rem] border p-4 transition-colors ${
+                      isActive
+                        ? "border-stone-900 bg-stone-950 text-stone-50 shadow-[0_18px_32px_rgba(28,25,23,0.12)]"
+                        : "border-stone-200 bg-stone-50/80 text-stone-900"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`inline-flex h-9 w-9 items-center justify-center rounded-full text-base font-semibold ${
+                          isActive ? "bg-white/15 text-stone-50" : "bg-white text-stone-900"
+                        }`}
+                      >
+                        {digit}
+                      </span>
+                      <p className="text-lg font-semibold">{meaning.name}</p>
+                    </div>
+                    <p
+                      className={`mt-3 text-sm leading-7 ${
+                        isActive ? "text-stone-200" : "text-stone-600"
+                      }`}
+                    >
+                      {meaning.body}
+                    </p>
+                  </article>
+                );
+              })}
+            </div>
           </article>
+        ) : null}
 
-          <article className="rounded-[1.5rem] border border-stone-200/80 bg-white/92 p-5 shadow-[0_14px_36px_rgba(43,33,23,0.05)] sm:p-6">
-            <h3 className="text-lg font-medium text-stone-950">常见对应形象</h3>
-            <p className="mt-4 text-base leading-8 text-stone-800">
-              {response.result.info.examplePeople || "暂无典型人物"}
-            </p>
-          </article>
-        </div>
-
-        <section className="grid gap-3 md:grid-cols-3">
-          {response.result.dimensionResults.map((item) => {
-            const tone = dimensionToneMap[item.key];
-
-            return (
-              <article
-                key={item.key}
-                className={`rounded-[1.35rem] border px-4 py-5 shadow-[0_10px_28px_rgba(31,24,18,0.05)] ${tone.panel}`}
-              >
-                <div className="flex items-baseline justify-between gap-3">
-                  <p className="text-base font-medium text-stone-900">{item.label}</p>
-                  <p className="font-serif text-3xl leading-none text-stone-950">{item.digit}</p>
-                </div>
-                <p className="mt-4 text-lg font-medium text-stone-950">{item.title}</p>
-                <p className="mt-3 text-sm leading-7 text-stone-700">{item.summary}</p>
-              </article>
-            );
-          })}
-        </section>
+        <article className="rounded-[1.5rem] border border-stone-200/80 bg-white/92 p-5 shadow-[0_14px_36px_rgba(43,33,23,0.05)] sm:rounded-[1.8rem] sm:p-7">
+          <h3 className="font-serif text-2xl font-semibold text-stone-950">
+            举个生活里的例子
+          </h3>
+          <p className="mt-4 text-sm leading-8 text-stone-700 sm:text-[15px]">
+            {response.result.info.simpleStory}
+          </p>
+        </article>
 
         <article className="rounded-[1.5rem] border border-stone-200/80 bg-white/92 p-5 shadow-[0_14px_36px_rgba(43,33,23,0.05)] sm:rounded-[1.8rem] sm:p-7">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -354,39 +524,24 @@ export default function QuizExperience({ questions }: QuizExperienceProps) {
           </div>
 
           {aiInterpretation ? (
-            <div className="mt-6 grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
-              <section className="grid gap-3">
+            <div className="mt-6 grid gap-5">
+              <section className="grid gap-3 lg:grid-cols-[0.95fr_1.05fr]">
                 <div className="rounded-[1.35rem] border border-stone-200 bg-[linear-gradient(145deg,rgba(255,251,235,0.85),rgba(255,255,255,0.9))] p-4">
-                  <p className="text-sm font-semibold text-stone-900">结果大意</p>
-                  <p className="mt-2 text-sm leading-7 text-stone-700">
+                  <p className="text-base font-semibold text-stone-900">结果大意</p>
+                  <p className="mt-2 text-[15px] leading-8 text-stone-700">
                     {aiInterpretation.resultSummary}
                   </p>
                 </div>
-                <div className="rounded-[1.35rem] border border-stone-200 bg-[linear-gradient(145deg,rgba(240,253,250,0.88),rgba(255,255,255,0.9))] p-4">
-                  <p className="text-sm font-semibold text-stone-900">放到这套测试里</p>
-                  <p className="mt-2 text-sm leading-7 text-stone-700">
-                    {aiInterpretation.philosophicalExplanation}
-                  </p>
-                </div>
-              </section>
-
-              <section className="grid gap-3">
                 <div className="rounded-[1.35rem] border border-stone-200 bg-[linear-gradient(145deg,rgba(240,249,255,0.88),rgba(255,255,255,0.9))] p-4">
-                  <p className="text-sm font-semibold text-stone-900">换成大白话</p>
-                  <p className="mt-2 text-sm leading-7 text-stone-700">
+                  <p className="text-base font-semibold text-stone-900">换成大白话</p>
+                  <p className="mt-2 text-[15px] leading-8 text-stone-700">
                     {aiInterpretation.simpleExplanation}
                   </p>
                 </div>
-                <div className="rounded-[1.35rem] border border-stone-200 bg-stone-50/80 p-4">
-                  <p className="text-sm font-semibold text-stone-900">再举个例子</p>
-                  <p className="mt-2 text-sm leading-7 text-stone-700">
-                    {aiInterpretation.exampleScenario}
-                  </p>
-                </div>
               </section>
 
-              <section className="lg:col-span-2">
-                <p className="text-sm font-semibold text-stone-900">三个维度分别怎么看</p>
+              <section>
+                <p className="text-base font-semibold text-stone-900">三个维度分别怎么看</p>
                 <div className="mt-3 grid gap-3 md:grid-cols-3">
                   {aiInterpretation.dimensionInterpretations.map((item) => {
                     const tone = dimensionToneMap[item.key];
@@ -396,20 +551,13 @@ export default function QuizExperience({ questions }: QuizExperienceProps) {
                         key={item.key}
                         className={`rounded-[1.3rem] border p-4 ${tone.panel}`}
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-xs uppercase tracking-[0.25em] text-stone-500">
-                            {item.label}
-                          </p>
-                          <span
-                            className={`rounded-full border px-2.5 py-1 text-xs font-medium ${digitToneMap[item.digit]}`}
-                          >
-                            {item.digit}
-                          </span>
-                        </div>
-                        <h4 className="mt-3 text-lg font-semibold text-stone-950">
-                          {item.title}
-                        </h4>
-                        <p className="mt-3 text-sm leading-7 text-stone-700">
+                        <p className="text-base font-semibold text-stone-900">
+                          {conciseDimensionLabelMap[item.key]}
+                        </p>
+                        <p className="mt-1 text-sm text-stone-500">
+                          {dimensionCaptionMap[item.key]}
+                        </p>
+                        <p className="mt-3 text-[15px] leading-8 text-stone-700">
                           {item.explanation}
                         </p>
                       </article>
@@ -464,22 +612,10 @@ export default function QuizExperience({ questions }: QuizExperienceProps) {
   if (phase === "intro") {
     return (
       <section className="mx-auto grid w-full max-w-5xl gap-4 sm:gap-5">
-        <div className="rounded-[1.7rem] border border-stone-200/70 bg-white/94 p-5 shadow-[0_24px_72px_rgba(31,24,18,0.08)] sm:rounded-[2rem] sm:p-8">
-          <h2 className="max-w-3xl text-balance font-serif text-3xl font-semibold leading-tight text-stone-950 sm:text-4xl lg:text-5xl">
-            用 24 道判断题，测出你在场域、本体、现象三条轴线上的哲学偏向。
-          </h2>
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-stone-700 sm:text-base sm:leading-8">
-            这不是性格测试，也不是谁高谁低的分数。它更像一张坐标图，帮你看清自己更习惯从哪种角度理解世界。
-          </p>
-          <p className="mt-5 text-sm text-stone-600 sm:text-base">
-            24 道判断题 · 3 个核心维度 · 5 档认同程度
-          </p>
-        </div>
-
         <div className="grid gap-4 lg:grid-cols-[0.92fr_1.08fr]">
           <div className="rounded-[1.6rem] border border-stone-200/70 bg-[linear-gradient(145deg,rgba(15,118,110,0.08),rgba(255,255,255,0.96)_28%,rgba(255,247,237,0.88))] p-5 shadow-[0_18px_60px_rgba(31,24,18,0.07)] sm:rounded-[1.9rem] sm:p-8">
             <h3 className="font-serif text-2xl font-semibold text-stone-950 sm:text-3xl">
-              先开始测试
+              开始
             </h3>
             <p className="mt-3 text-sm leading-7 text-stone-600">
               称呼和留言都可以留空，直接开始也行。
@@ -510,7 +646,11 @@ export default function QuizExperience({ questions }: QuizExperienceProps) {
 
             <button
               type="button"
-              onClick={() => setPhase("quiz")}
+              onClick={() => {
+                setError("");
+                setPhase("quiz");
+              }}
+              disabled={isSubmitting}
               className="mt-6 w-full rounded-full bg-[linear-gradient(90deg,#0f766e,#14b8a6)] px-5 py-4 text-sm font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(15,118,110,0.28)] active:translate-y-0"
             >
               开始测试
@@ -522,10 +662,7 @@ export default function QuizExperience({ questions }: QuizExperienceProps) {
               这个测试在测什么
             </h3>
             <p className="mt-4 text-sm leading-7 text-stone-700 sm:text-base sm:leading-8">
-              这套测试基于《主义主义》里的“四维矩阵”框架，但当前版本只先测前三条轴线：场域、本体、现象。也就是你如何理解世界背景、如何界定什么算真实、以及真实通常怎样出现在你的经验里。
-            </p>
-            <p className="mt-3 text-sm leading-7 text-stone-700 sm:text-base sm:leading-8">
-              所以结果不是高低判断，而是一张思考方式的结构图。你可以把它理解成一张地图，而不是一次考试成绩。
+              这是一个庸俗的哲学意识形态分类框架，会从场域、本体和现象三个维度评估你的意识形态倾向。
             </p>
 
             <div className="mt-6 grid gap-3 md:grid-cols-3">
@@ -545,7 +682,38 @@ export default function QuizExperience({ questions }: QuizExperienceProps) {
                 </article>
               ))}
             </div>
+
+            <p className="mt-4 text-sm leading-7 text-stone-700 sm:text-base sm:leading-8">
+              每个维度会填入一个 1-4 的数字，代表你在这个维度上的倾向。最后会根据这三个数字进行分析。
+            </p>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {DIGIT_MEANING_CARDS.map((item) => (
+                <article
+                  key={item.digit}
+                  className="rounded-[1.25rem] border border-stone-200/80 bg-stone-50/75 px-4 py-4"
+                >
+                  <p className="font-serif text-3xl font-semibold leading-none text-stone-950">
+                    {item.digit}
+                  </p>
+                  <p className="mt-3 text-lg font-semibold text-stone-950">{item.label}</p>
+                  <p className="mt-1 text-sm text-stone-600">{item.note}</p>
+                </article>
+              ))}
+            </div>
           </div>
+        </div>
+
+        <div className="flex flex-col items-end gap-3">
+          {error ? <p className="text-sm text-red-600">{error}</p> : null}
+          <button
+            type="button"
+            onClick={openPreviewResult}
+            disabled={isSubmitting}
+            className="rounded-full border border-stone-300 bg-white/80 px-4 py-2 text-sm text-stone-600 transition duration-200 hover:border-stone-500 hover:bg-white hover:text-stone-950 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isSubmitting ? "正在打开测试结果..." : "测试按钮"}
+          </button>
         </div>
       </section>
     );

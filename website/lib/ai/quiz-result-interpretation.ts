@@ -107,11 +107,11 @@ const buildSystemPrompt = () => `
 4. 可以保留必要概念，但不要堆术语；如果提到概念，要立刻用普通话解释清楚。
 5. 不要照抄输入里的学术表达，不要把原文换个说法再重复一遍。
 6. 每段都先说“这大概是什么意思”，再补充框架上的理解。
-7. 返回必须是 JSON 对象，不要包含 Markdown 代码块，不要输出额外说明。
-8. JSON 结构必须包含以下字段：
+7. 你拿到的结果信息只有 coreCode、name、axis_list、feature_list、example_people；其中 axis_list 的顺序就是场域、本体、现象。
+8. 返回必须是 JSON 对象，不要包含 Markdown 代码块，不要输出额外说明。
+9. JSON 结构必须包含以下字段：
 {
   "resultSummary": "这个结果是什么",
-  "philosophicalExplanation": "哲学解释",
   "simpleExplanation": "通俗解释",
   "exampleScenario": "举例说明",
   "dimensionInterpretations": [
@@ -120,8 +120,11 @@ const buildSystemPrompt = () => `
     }
   ]
 }
-9. dimensionInterpretations 必须严格返回 3 项，顺序与输入结果中的 dimensionResults 一致。
-10. 每段都要写得充实一些，避免空泛套话。
+10. dimensionInterpretations 必须严格返回 3 项，顺序与输入中的 axis_list 一致。
+11. 控制篇幅：resultSummary 尽量在 80 到 110 字，simpleExplanation 尽量在 90 到 130 字，exampleScenario 尽量在 70 到 110 字。
+12. 每个 dimensionInterpretations[i].explanation 尽量控制在 55 到 85 字，1 到 2 句即可。
+13. 避免同义反复、铺陈和套话，优先直接说重点。
+14. 结果页除主结果卡和 simple_story 外，其余说明都由你生成，所以不要假设页面还会显示固定的维度说明卡。
 `.trim();
 
 const buildUserPrompt = (overviewText: string, result: QuizResult) =>
@@ -136,15 +139,9 @@ const buildUserPrompt = (overviewText: string, result: QuizResult) =>
       {
         coreCode: result.coreCode,
         name: result.name,
-        englishName: result.englishName,
-        dimensionResults: result.dimensionResults.map((item) => ({
-          key: item.key,
-          label: item.label,
-          digit: item.digit,
-          title: item.title,
-          summary: item.summary,
-        })),
-        info: result.info,
+        axis_list: result.info.axisList,
+        feature_list: result.info.featureList,
+        example_people: result.info.examplePeople,
       },
       null,
       2,
@@ -221,17 +218,49 @@ const getLongText = (
   return trimmed.length >= minimumLength ? trimmed : fallback;
 };
 
+const findLastBreakIndex = (text: string, charset: string) => {
+  for (let index = text.length - 1; index >= 0; index -= 1) {
+    if (charset.includes(text[index] ?? "")) {
+      return index;
+    }
+  }
+
+  return -1;
+};
+
+const shortenText = (value: string, maxLength: number) => {
+  const normalized = value.replace(/\s+/g, " ").trim();
+
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+
+  const visibleSlice = normalized.slice(0, maxLength);
+  const majorBreakIndex = findLastBreakIndex(visibleSlice, "。！？；");
+
+  if (majorBreakIndex >= Math.floor(maxLength * 0.55)) {
+    return visibleSlice.slice(0, majorBreakIndex + 1).trim();
+  }
+
+  const minorBreakIndex = findLastBreakIndex(visibleSlice, "，、");
+
+  if (minorBreakIndex >= Math.floor(maxLength * 0.65)) {
+    return `${visibleSlice.slice(0, minorBreakIndex).trim()}。`;
+  }
+
+  return `${normalized.slice(0, Math.max(0, maxLength - 1)).trim()}…`;
+};
+
 const buildFallbackInterpretation = (result: QuizResult): QuizResultAiInterpretation => ({
-  resultSummary: `${result.name}（${result.coreCode}）表示你看世界时，通常会沿着一套比较稳定的思路走。它不是在说你好或不好，而是在描述你更自然会从哪些角度理解现实。`,
-  philosophicalExplanation: `放到这套测试里看，这个结果的意思是：你对“世界是什么样”“什么最重要”“人是怎么感受到现实的”这三件事，有一组彼此能接上的倾向。它不是把你塞进某个学派，而是在总结你更常用的理解方式。`,
-  simpleExplanation: `换成大白话，这就像你脑子里有一套默认的看问题方法。遇到一件事时，你会比较自然地先看哪些部分、相信哪些东西更关键、又会从什么地方感觉到“这件事到底是怎么回事”。`,
-  exampleScenario: `比如面对一条新规则，有的人先看它合不合理，有的人先看是谁定的，有的人先看自己有什么感觉。你的结果就是在说明，你通常更像哪一种人，以及这几种判断会怎么连起来。`,
+  resultSummary: `${result.name}（${result.coreCode}）表示你看世界时，会沿着一套相对稳定的理解路径走。它不是成绩高低，而是在描述你更自然会从哪些角度进入现实。`,
+  simpleExplanation: `换成大白话，就是你脑子里有一套默认的看问题顺序。遇到事情时，你会本能地先抓住某些部分，再据此判断什么更重要。`,
+  exampleScenario: `比如面对一条新规则，有的人先看规则本身，有的人先看背后是谁在推动，也有人先看自己的感受。你的结果就是在说明你通常更像哪一种。`,
   dimensionInterpretations: result.dimensionResults.map((item) => ({
     key: item.key,
     label: item.label,
     digit: item.digit,
     title: item.title,
-    explanation: `在${item.label}这一块，你更接近“${item.title}”。简单说就是：${item.summary} 也就是说，你在这一条线上做判断时，更容易先从这个方向切进去。`,
+    explanation: `在${item.label}这一块，你更接近“${item.title}”。简单说，就是${item.summary}`,
   })),
 });
 
@@ -245,14 +274,18 @@ const normalizeInterpretation = (
     : [];
 
   return {
-    resultSummary: getLongText(raw.resultSummary, fallback.resultSummary, 24),
-    philosophicalExplanation: getLongText(
-      raw.philosophicalExplanation,
-      fallback.philosophicalExplanation,
-      40,
+    resultSummary: shortenText(
+      getLongText(raw.resultSummary, fallback.resultSummary, 24),
+      108,
     ),
-    simpleExplanation: getLongText(raw.simpleExplanation, fallback.simpleExplanation, 32),
-    exampleScenario: getLongText(raw.exampleScenario, fallback.exampleScenario, 32),
+    simpleExplanation: shortenText(
+      getLongText(raw.simpleExplanation, fallback.simpleExplanation, 32),
+      128,
+    ),
+    exampleScenario: shortenText(
+      getLongText(raw.exampleScenario, fallback.exampleScenario, 32),
+      108,
+    ),
     dimensionInterpretations: result.dimensionResults.map((item, index) => {
       const source = rawDimensions[index];
       const explanation =
@@ -270,7 +303,7 @@ const normalizeInterpretation = (
         label: item.label,
         digit: item.digit,
         title: item.title,
-        explanation,
+        explanation: shortenText(explanation, 84),
       };
     }),
   };

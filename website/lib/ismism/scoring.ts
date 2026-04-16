@@ -181,9 +181,32 @@ const DEFAULT_INFO_BY_CODE: Record<
 
 const round = (value: number) => Math.round(value * 100) / 100;
 
-const toDigit = (ratio: number): 1 | 2 | 3 | 4 => {
+const DIGIT_BREAKPOINTS_BY_DIMENSION: Record<
+  DimensionKey,
+  readonly [number, number, number]
+> = {
+  field: [0.18, 0.45, 0.78],
+  ontology: [0.18, 0.45, 0.85],
+  phenomenon: [0.18, 0.45, 0.85],
+};
+
+const toDigit = (dimension: DimensionKey, ratio: number): 1 | 2 | 3 | 4 => {
   const bounded = Math.min(0.999999, Math.max(0, ratio));
-  return (Math.floor(bounded * 4) + 1) as 1 | 2 | 3 | 4;
+  const [first, second, third] = DIGIT_BREAKPOINTS_BY_DIMENSION[dimension];
+
+  if (bounded < first) {
+    return 1;
+  }
+
+  if (bounded < second) {
+    return 2;
+  }
+
+  if (bounded < third) {
+    return 3;
+  }
+
+  return 4;
 };
 
 const isMeaningfulText = (value?: string | null, minimumLength = 8) =>
@@ -289,6 +312,55 @@ const buildFallbackInfo = (
 export const getAnswerLabel = (value: AgreementValue) =>
   AGREEMENT_OPTIONS.find((option) => option.value === value)?.label ?? value;
 
+const buildQuizResultPayload = ({
+  dimensionResults,
+  enhancedCatalog,
+  coreCode,
+}: {
+  dimensionResults: DimensionResult[];
+  enhancedCatalog: Record<string, IsmCatalogEntry>;
+  coreCode?: string;
+}): QuizResult => {
+  const resolvedCoreCode =
+    coreCode ?? dimensionResults.map((result) => result.digit).join("-");
+  const coreInfo = enhancedCatalog[resolvedCoreCode];
+  const englishName = coreInfo?.en_name || "";
+
+  const now = Date.now();
+  const randomSuffix = Math.floor(Math.random() * 10_000);
+  const clientId = now * 10_000 + randomSuffix;
+
+  const preferredName = coreInfo?.ch_name || `${resolvedCoreCode} 型哲学倾向`;
+  const fallbackInfo = buildFallbackInfo(
+    resolvedCoreCode,
+    preferredName,
+    dimensionResults,
+  );
+
+  return {
+    clientId,
+    createdAt: new Date().toISOString(),
+    dimensionResults,
+    coreCode: resolvedCoreCode,
+    name: preferredName,
+    englishName,
+    info: {
+      axisList: buildAxisInsightList(
+        dimensionResults,
+        coreInfo?.axis_list,
+        fallbackInfo.axisList,
+      ),
+      featureList: mergeInformativeList(coreInfo?.feature_list, fallbackInfo.featureList),
+      examplePeople: isMeaningfulText(coreInfo?.example_people, 4)
+        ? coreInfo.example_people!.trim()
+        : fallbackInfo.examplePeople,
+      simpleStory: isMeaningfulText(coreInfo?.simple_story, 20)
+        ? coreInfo.simple_story!.trim()
+        : fallbackInfo.simpleStory,
+    },
+  };
+};
+
 const buildDimensionResult = (
   dimension: DimensionKey,
   questions: QuizQuestion[],
@@ -303,7 +375,7 @@ const buildDimensionResult = (
   const maxScore = scoped.reduce((total, question) => total + question.weight, 0);
   const normalized = maxScore === 0 ? 0 : rawScore / maxScore;
   const percentage = round(normalized * 100);
-  const digit = toDigit(normalized);
+  const digit = toDigit(dimension, normalized);
   const copy = DIMENSION_TITLE_MAP[dimension][digit - 1];
 
   return {
@@ -319,6 +391,39 @@ const buildDimensionResult = (
   };
 };
 
+const buildDimensionResultFromDigit = (
+  dimension: DimensionKey,
+  digit: 1 | 2 | 3 | 4,
+): DimensionResult => {
+  const copy = DIMENSION_TITLE_MAP[dimension][digit - 1];
+
+  return {
+    key: dimension,
+    label: DIMENSION_LABELS[dimension],
+    rawScore: digit,
+    maxScore: 4,
+    percentage: digit * 25,
+    digit,
+    marker: DIGIT_MARKER_MAP[digit],
+    title: copy.title,
+    summary: copy.summary,
+  };
+};
+
+const normalizeCoreCode = (value: string) => value.trim().replace(/\s+/g, "");
+
+const parseCoreCode = (coreCode: string): Array<1 | 2 | 3 | 4> | null => {
+  const normalized = normalizeCoreCode(coreCode);
+
+  if (!/^[1-4]-[1-4]-[1-4]$/.test(normalized)) {
+    return null;
+  }
+
+  return normalized
+    .split("-")
+    .map((digit) => Number(digit) as 1 | 2 | 3 | 4);
+};
+
 export const buildQuizResult = ({
   questions,
   answers,
@@ -332,37 +437,33 @@ export const buildQuizResult = ({
     buildDimensionResult(dimension, questions, answers),
   );
 
-  const coreCode = dimensionResults.map((result) => result.digit).join("-");
-  const coreInfo = enhancedCatalog[coreCode];
-  const englishName = coreInfo?.en_name || "";
-
-  const now = Date.now();
-  const randomSuffix = Math.floor(Math.random() * 10_000);
-  const clientId = now * 10_000 + randomSuffix;
-
-  const preferredName = coreInfo?.ch_name || `${coreCode} 型哲学倾向`;
-  const fallbackInfo = buildFallbackInfo(coreCode, preferredName, dimensionResults);
-
-  return {
-    clientId,
-    createdAt: new Date().toISOString(),
+  return buildQuizResultPayload({
     dimensionResults,
-    coreCode,
-    name: preferredName,
-    englishName,
-    info: {
-      axisList: buildAxisInsightList(
-        dimensionResults,
-        coreInfo?.axis_list,
-        fallbackInfo.axisList,
-      ),
-      featureList: mergeInformativeList(coreInfo?.feature_list, fallbackInfo.featureList),
-      examplePeople: isMeaningfulText(coreInfo?.example_people, 4)
-        ? coreInfo!.example_people!.trim()
-        : fallbackInfo.examplePeople,
-      simpleStory: isMeaningfulText(coreInfo?.simple_story, 20)
-        ? coreInfo!.simple_story!.trim()
-        : fallbackInfo.simpleStory,
-    },
-  };
+    enhancedCatalog,
+  });
+};
+
+export const buildQuizResultFromCoreCode = ({
+  coreCode,
+  enhancedCatalog,
+}: {
+  coreCode: string;
+  enhancedCatalog: Record<string, IsmCatalogEntry>;
+}): QuizResult => {
+  const digits = parseCoreCode(coreCode);
+
+  if (!digits) {
+    throw new Error("结果代码格式不对，请输入类似 1-1-1 的三位数字。");
+  }
+
+  const normalizedCoreCode = normalizeCoreCode(coreCode);
+  const dimensionResults = DIMENSION_ORDER.map((dimension, index) =>
+    buildDimensionResultFromDigit(dimension, digits[index]!),
+  );
+
+  return buildQuizResultPayload({
+    dimensionResults,
+    enhancedCatalog,
+    coreCode: normalizedCoreCode,
+  });
 };
