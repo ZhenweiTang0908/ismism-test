@@ -694,14 +694,14 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
                                 : "—"}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-right sm:px-6">
+                          <td className="w-px px-4 py-3 text-right sm:px-6">
                             <button
                               type="button"
                               onClick={() => {
                                 setSelectedOtherIsmCode(key);
                                 setIsIsmDetailOpen(true);
                               }}
-                              className="rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-xs font-medium text-teal-700 transition hover:bg-teal-100 hover:text-teal-900"
+                              className="whitespace-nowrap rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-xs font-medium text-teal-700 transition hover:bg-teal-100 hover:text-teal-900"
                             >
                               查看
                             </button>
@@ -1002,7 +1002,7 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
           </span>
         </div>
 
-        <div className="min-h-0 sm:min-h-[13rem]">
+        <div>
           <h2 className="mt-5 text-balance font-serif text-2xl leading-tight text-stone-950 sm:text-3xl lg:text-[2.55rem]">
             {currentQuestion.question}
           </h2>
