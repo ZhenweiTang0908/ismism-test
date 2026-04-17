@@ -617,6 +617,40 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
             查看其他主义
           </button>
         </div>
+
+        <div className="mt-2 rounded-[1.4rem] border border-stone-200/60 bg-stone-50/60 px-5 py-4">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-stone-400">参考信息</p>
+          <ul className="grid gap-1.5">
+            <li className="flex items-start gap-2 text-[13px] text-stone-600">
+              <span className="mt-0.5 shrink-0 text-stone-400">▸</span>
+              <span>
+                原作者讲解：
+                <a
+                  href="https://www.bilibili.com/video/BV1JT4y1K7dp/?spm_id_from=333.337.search-card.all.click"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-teal-700 underline-offset-2 transition hover:text-teal-900 hover:underline"
+                >
+                  【主义主义】哲学意识形态大全-总纲
+                </a>
+              </span>
+            </li>
+            <li className="flex items-start gap-2 text-[13px] text-stone-600">
+              <span className="mt-0.5 shrink-0 text-stone-400">▸</span>
+              <span>
+                主义主义魔方：
+                <a
+                  href="https://ismismtag.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-teal-700 underline-offset-2 transition hover:text-teal-900 hover:underline"
+                >
+                  ismismtag.com
+                </a>
+              </span>
+            </li>
+          </ul>
+        </div>
       </section>
 
       {/* 列表弹窗 */}
@@ -916,6 +950,40 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="rounded-[1.4rem] border border-stone-200/60 bg-stone-50/60 px-5 py-4">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-stone-400">参考信息</p>
+          <ul className="grid gap-1.5">
+            <li className="flex items-start gap-2 text-[13px] text-stone-600">
+              <span className="mt-0.5 shrink-0 text-stone-400">▸</span>
+              <span>
+                原作者讲解：
+                <a
+                  href="https://www.bilibili.com/video/BV1JT4y1K7dp/?spm_id_from=333.337.search-card.all.click"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-teal-700 underline-offset-2 transition hover:text-teal-900 hover:underline"
+                >
+                  【主义主义】哲学意识形态大全-总纲
+                </a>
+              </span>
+            </li>
+            <li className="flex items-start gap-2 text-[13px] text-stone-600">
+              <span className="mt-0.5 shrink-0 text-stone-400">▸</span>
+              <span>
+                主义主义魔方：
+                <a
+                  href="https://ismismtag.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-teal-700 underline-offset-2 transition hover:text-teal-900 hover:underline"
+                >
+                  ismismtag.com
+                </a>
+              </span>
+            </li>
+          </ul>
         </div>
 
         <div className="flex flex-col items-end gap-3">
