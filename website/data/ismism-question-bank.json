@@ -22,7 +22,7 @@
     ]
   },
   "03": {
-    "question": "你的国家提出2年内突破美国的AI封锁，对此你的感受是：",
+    "question": "【你的国家】提出2年内突破美国的AI封锁，对此你的感受是：",
     "dimension": "field",
     "type": "public",
     "options": [
@@ -33,7 +33,7 @@
     ]
   },
   "04":{
-    "question": "关于自然规律的本质（例如牛顿力学），你的看法是：",
+    "question": "关于自然规律的【本质】（例如牛顿力学），你的看法是：",
     "dimension": "field",
     "type": "abstract",
     "options": [
@@ -44,18 +44,18 @@
     ]
   },
   "05": {
-    "question": "如何破除男权社会？",
+    "question": "作为一个【普通人】，以下哪一种做法是你认为的“更优做法”？",
     "dimension": "field",
     "type": "abstract",
     "options": [
-      { "value": "1", "label": "男权社会是一种自古以来就存在的体系，不可抗拒" },
-      { "value": "2", "label": "因为现实太残酷，所以在线上针对男权的反驳暂时是关键手段" },
-      { "value": "3", "label": "女性应该追求消费独立和职场成功，用购买力和地位证明自己" },
-      { "value": "4", "label": "帮助我身边的劳动妇女(比如我的母亲)是关键手段" }
+      { "value": "1", "label": "要迅速推翻资产阶级，建立一个无产阶级彻底主宰的社会" },
+      { "value": "2", "label": "现实斗争太残酷，所以线上针对资产阶级的攻击暂时是关键手段" },
+      { "value": "3", "label": "成为资本家，进行资本积累，然后才有力量推翻资产阶级" },
+      { "value": "4", "label": "承担现实责任的同时，帮助和支持身边的劳动者是关键手段" }
     ]
   },
   "06": {
-    "question": "你认为，哪种情况最能体现你的自我？",
+    "question": "你认为，哪种情况最能体现你的【自我】？",
     "dimension": "ontology",
     "type": "life",
     "options": [
@@ -66,7 +66,7 @@
     ]
   },
   "07": {
-    "question": "你认为“历史”的本质是什么？",
+    "question": "你认为“历史”的【本质】是什么？",
     "dimension": "ontology",
     "type": "public",
     "options": [
@@ -110,7 +110,7 @@
     ]
   },
   "11": {
-    "question": "面对一份家具的组装说明书，上面的步骤似乎有问题，你的第一反应是？",
+    "question": "面对一份家具的组装说明书，上面的步骤似乎【有问题】，你的第一反应是？",
     "dimension": "phenomenon",
     "type": "life",
     "options": [
@@ -121,7 +121,7 @@
     ]
   },
   "12": {
-    "question": "看到争议新闻视频，你会认为？",
+    "question": "看到争议新闻，你会认为？",
     "dimension": "phenomenon",
     "type": "public",
     "options": [
@@ -132,7 +132,7 @@
     ]
   },
   "13": {
-    "question": "面对突发公共事件的新闻，你更容易从哪里看问题？",
+    "question": "看到争议新闻，你更容易从哪里发现【问题】？",
     "dimension": "phenomenon",
     "type": "public",
     "options": [
@@ -143,7 +143,7 @@
     ]
   },
   "14": {
-    "question": "恋爱中的“滤镜”，你觉得是？",
+    "question": "恋爱中的【滤镜】，你觉得是？",
     "dimension": "phenomenon",
     "type": "abstract",
     "options": [
