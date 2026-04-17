@@ -56,6 +56,7 @@ export async function GET(req: NextRequest) {
     const englishName = searchParams.get("en") ?? "";
     const examplePeople = searchParams.get("ep") ?? "";
     const story = searchParams.get("story") ?? "";
+    const userName = searchParams.get("uname") ?? "";
     const fd = searchParams.get("fd") ?? "?";
     const fm = searchParams.get("fm") ?? "—";
     const od = searchParams.get("od") ?? "?";
@@ -124,17 +125,30 @@ export async function GET(req: NextRequest) {
               alignItems: "center",
             }}
           >
-            <span
-              style={{
-                fontSize: 11,
-                letterSpacing: "0.3em",
-                textTransform: "uppercase",
-                color: "#a8a29e",
-                fontFamily: "sans-serif",
-              }}
-            >
-              测试结果
-            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {userName ? (
+                <span
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: "#44403c",
+                  }}
+                >
+                  {userName}
+                </span>
+              ) : null}
+              <span
+                style={{
+                  fontSize: 11,
+                  letterSpacing: "0.25em",
+                  textTransform: "uppercase",
+                  color: "#a8a29e",
+                  fontFamily: "sans-serif",
+                }}
+              >
+                {userName ? "的哲学倾向" : "测试结果"}
+              </span>
+            </div>
             <span
               style={{
                 fontSize: 12,

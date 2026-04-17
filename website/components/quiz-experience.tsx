@@ -345,6 +345,7 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
         ...(r.englishName ? { en: r.englishName } : {}),
         ep: examplePeopleDisplay.name,
         story: r.info.simpleStory || "",
+        uname: profile.name || "",
         fd: String(dims.field?.digit ?? ""),
         fm: dims.field?.marker ?? "",
         od: String(dims.ontology?.digit ?? ""),
