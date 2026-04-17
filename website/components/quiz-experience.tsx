@@ -149,6 +149,7 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
     useState(false);
   const [isOtherIsmsModalOpen, setIsOtherIsmsModalOpen] = useState(false);
   const [selectedOtherIsmCode, setSelectedOtherIsmCode] = useState<string>("1-1-1");
+  const [isIsmDetailOpen, setIsIsmDetailOpen] = useState(false);
 
   const currentQuestion = questions[currentIndex];
   const currentQuestionNumber = currentIndex + 1;
@@ -618,13 +619,23 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
         </div>
       </section>
 
+      {/* 列表弹窗 */}
       {isOtherIsmsModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 p-4 backdrop-blur-md sm:p-6 transition-all duration-300">
-          <div className="w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-6 shadow-[0_24px_72px_rgba(0,0,0,0.2)] sm:p-8" style={{ maxHeight: "calc(100vh - 2rem)" }}>
-            <div className="mb-6 flex items-center justify-between">
-              <h3 className="font-serif text-xl font-bold text-stone-900 sm:text-2xl">
-                查看其他主义
-              </h3>
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center bg-stone-900/60 p-4 backdrop-blur-md sm:p-6"
+          onClick={(e) => { if (e.target === e.currentTarget) setIsOtherIsmsModalOpen(false); }}
+        >
+          <div
+            className="mt-4 w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-[0_24px_72px_rgba(0,0,0,0.22)] sm:mt-8"
+            style={{ maxHeight: "calc(100vh - 4rem)" }}
+          >
+            <div className="flex items-center justify-between border-b border-stone-100 px-5 py-4 sm:px-7 sm:py-5">
+              <div>
+                <h3 className="font-serif text-xl font-bold text-stone-900">全部主义列表</h3>
+                <p className="mt-0.5 text-xs text-stone-400">
+                  {Object.keys(enhancedCatalog).filter((k) => /^[1-4]-[1-4]-[1-4]$/.test(k)).length} 个主义，点击查看了解详情
+                </p>
+              </div>
               <button
                 onClick={() => setIsOtherIsmsModalOpen(false)}
                 className="rounded-full bg-stone-100 p-2 text-stone-400 transition hover:bg-stone-200 hover:text-stone-700"
@@ -635,115 +646,171 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
               </button>
             </div>
 
-            <div className="mb-6">
-              <label className="mb-2 block text-sm font-semibold text-stone-700">
-                选择一个主义
-              </label>
-              <div className="relative">
-                <select
-                  value={selectedOtherIsmCode}
-                  onChange={(e) => setSelectedOtherIsmCode(e.target.value)}
-                  className="w-full appearance-none rounded-xl border border-stone-200 bg-stone-50 px-4 py-3.5 pr-10 text-[15px] font-medium text-stone-900 outline-none transition focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
-                >
+            <div className="overflow-y-auto" style={{ maxHeight: "calc(100vh - 10rem)" }}>
+              <table className="w-full">
+                <thead className="sticky top-0 z-10 bg-stone-50/95 backdrop-blur-sm">
+                  <tr className="border-b border-stone-100">
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-stone-400 sm:px-6">代码</th>
+                    <th className="px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-stone-400">主义名称</th>
+                    <th className="hidden px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-stone-400 sm:table-cell">代表人物</th>
+                    <th className="px-4 py-3 sm:px-6"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-stone-50">
                   {Object.entries(enhancedCatalog)
                     .filter(([key]) => /^[1-4]-[1-4]-[1-4]$/.test(key))
                     .sort(([a], [b]) => a.localeCompare(b))
-                    .map(([key, entry]) => (
-                      <option key={key} value={key}>
-                        {key} - {entry.ch_name || "未知主义"}{entry.example_people ? ` - ${entry.example_people}` : ""}
-                      </option>
-                    ))}
-                </select>
-                <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-stone-400">
-                  <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
+                    .map(([key, entry], idx) => {
+                      const digits = key.split("-");
+                      const dotColors = ["bg-amber-400", "bg-teal-400", "bg-violet-400"];
+                      return (
+                        <tr
+                          key={key}
+                          className={`transition-colors hover:bg-teal-50/40 ${
+                            idx % 2 === 0 ? "bg-white" : "bg-stone-50/30"
+                          }`}
+                        >
+                          <td className="px-4 py-3 sm:px-6">
+                            <div className="flex items-center gap-1">
+                              {digits.map((d, i) => (
+                                <span
+                                  key={i}
+                                  className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold text-white ${dotColors[i]}`}
+                                >
+                                  {d}
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="px-2 py-3">
+                            <span className="text-sm font-semibold text-stone-900">
+                              {entry.ch_name || "未命名"}
+                            </span>
+                          </td>
+                          <td className="hidden px-2 py-3 sm:table-cell">
+                            <span className="text-sm text-stone-500">
+                              {entry.example_people
+                                ? entry.example_people.split(/[，,]/)[0]?.trim()
+                                : "—"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right sm:px-6">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedOtherIsmCode(key);
+                                setIsIsmDetailOpen(true);
+                              }}
+                              className="rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-xs font-medium text-teal-700 transition hover:bg-teal-100 hover:text-teal-900"
+                            >
+                              查看
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 详情弹窗 */}
+      {isIsmDetailOpen && selectedOtherIsmCode && enhancedCatalog[selectedOtherIsmCode] && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-stone-900/70 p-4 backdrop-blur-md sm:p-6"
+          onClick={(e) => { if (e.target === e.currentTarget) setIsIsmDetailOpen(false); }}
+        >
+          <div
+            className="w-full max-w-xl overflow-y-auto rounded-3xl bg-white shadow-[0_24px_72px_rgba(0,0,0,0.25)] sm:rounded-[2rem]"
+            style={{ maxHeight: "calc(100vh - 2rem)" }}
+          >
+            <div className="flex items-start justify-between border-b border-stone-100 p-5 sm:p-7">
+              <div>
+                <div className="mb-2 flex items-center gap-1.5">
+                  {selectedOtherIsmCode.split("-").map((d, i) => {
+                    const colors = ["bg-amber-400", "bg-teal-400", "bg-violet-400"];
+                    return (
+                      <span key={i} className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[12px] font-bold text-white ${colors[i]}`}>
+                        {d}
+                      </span>
+                    );
+                  })}
                 </div>
+                <h4 className="font-serif text-2xl font-bold text-stone-900 sm:text-3xl">
+                  {enhancedCatalog[selectedOtherIsmCode].ch_name}
+                </h4>
+                {enhancedCatalog[selectedOtherIsmCode].example_people && (
+                  <p className="mt-1.5 text-sm text-stone-500">
+                    代表人物：{enhancedCatalog[selectedOtherIsmCode].example_people}
+                  </p>
+                )}
+              </div>
+              <div className="flex shrink-0 items-center gap-2 pl-3">
+                <button
+                  onClick={() => setIsIsmDetailOpen(false)}
+                  className="rounded-full bg-stone-100 p-2 text-stone-500 transition hover:bg-stone-200 hover:text-stone-800"
+                  title="返回列表"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => { setIsIsmDetailOpen(false); setIsOtherIsmsModalOpen(false); }}
+                  className="rounded-full bg-stone-100 p-2 text-stone-400 transition hover:bg-stone-200 hover:text-stone-700"
+                  title="关闭"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
             </div>
 
-            {selectedOtherIsmCode && enhancedCatalog[selectedOtherIsmCode] && (
-              <div className="grid gap-6">
-                <div className="rounded-[1.4rem] border border-stone-200/60 bg-white p-5 shadow-sm sm:p-7 text-center sm:text-left flex flex-col items-center sm:items-start">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-stone-50 px-3 py-1 mb-4 text-xs font-semibold tracking-wider text-stone-500">
-                    {selectedOtherIsmCode}
-                  </div>
-                  <h4 className="font-serif text-[2rem] font-bold text-stone-900 sm:text-[2.6rem]">
-                    {enhancedCatalog[selectedOtherIsmCode].ch_name}
-                  </h4>
-                  {enhancedCatalog[selectedOtherIsmCode].example_people && (
-                    <p className="mt-2 text-[15px] font-medium text-stone-500">
-                      代表人物：{enhancedCatalog[selectedOtherIsmCode].example_people}
-                    </p>
-                  )}
-                </div>
-
-                <div className="rounded-[1.4rem] border border-stone-200/50 bg-[linear-gradient(145deg,rgba(15,118,110,0.02),rgba(255,255,255,0.9)_30%,rgba(255,247,237,0.4))] p-5 shadow-[0_4px_20px_rgba(31,24,18,0.02)] sm:p-7">
-                  <div className="mb-4 flex items-center gap-2">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-teal-100 text-teal-700">
-                      <svg
-                        className="h-4 w-4"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M12 4.5v15m7.5-7.5h-15"
-                        />
+            <div className="grid gap-4 p-5 sm:p-7">
+              {enhancedCatalog[selectedOtherIsmCode].simple_story ? (
+                <div className="rounded-[1.3rem] border border-teal-200/60 bg-[linear-gradient(145deg,rgba(204,251,241,0.35),rgba(255,255,255,0.9))] p-5">
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-100 text-teal-700">
+                      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                       </svg>
                     </span>
-                    <h4 className="font-serif text-lg font-bold text-stone-900">一个例子</h4>
+                    <h5 className="text-sm font-semibold text-teal-800">一个例子</h5>
                   </div>
-                  
-                  {enhancedCatalog[selectedOtherIsmCode].simple_story ? (
-                    <div className="relative mt-2">
-                      <div className="absolute -left-2 -top-2 text-4xl text-teal-900/5 font-serif">"</div>
-                      <p className="relative z-10 text-[15px] leading-8 text-stone-600 sm:text-base sm:leading-9">
-                        {enhancedCatalog[selectedOtherIsmCode].simple_story}
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="text-[15px] leading-8 text-stone-400">暂无具体例子。</p>
-                  )}
+                  <p className="text-[14px] leading-7 text-stone-600">
+                    {enhancedCatalog[selectedOtherIsmCode].simple_story}
+                  </p>
                 </div>
+              ) : (
+                <div className="rounded-[1.3rem] border border-stone-100 bg-stone-50 p-5">
+                  <p className="text-sm text-stone-400">暂无具体例子。</p>
+                </div>
+              )}
 
-                <div className="rounded-[1.4rem] border border-stone-100 bg-[linear-gradient(135deg,rgba(255,252,248,0.98),rgba(255,247,237,0.92)_42%,rgba(240,253,250,0.88))] p-5 shadow-sm sm:p-7">
-                  <div className="mb-5 flex items-center gap-2">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-stone-900 text-stone-50">
-                      <svg
-                        className="h-4 w-4"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                        />
+              {(enhancedCatalog[selectedOtherIsmCode].feature_list || []).length > 0 && (
+                <div className="rounded-[1.3rem] border border-stone-100 bg-[linear-gradient(135deg,rgba(255,252,248,0.98),rgba(240,253,250,0.7))] p-5">
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-stone-900 text-stone-50">
+                      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                       </svg>
                     </span>
-                    <h4 className="font-serif text-lg font-bold text-stone-900">核心特征</h4>
+                    <h5 className="text-sm font-semibold text-stone-800">核心特征</h5>
                   </div>
-                  <div className="grid gap-3">
-                    {(enhancedCatalog[selectedOtherIsmCode].feature_list || []).map(
-                      (feature, idx) => (
-                        <div key={idx} className="flex gap-3 rounded-2xl bg-white/60 p-4 shadow-sm">
-                          <span className="mt-1.5 flex h-1.5 w-1.5 shrink-0 rounded-full bg-teal-500" />
-                          <span className="text-[15px] leading-7 text-stone-700">
-                            {feature}
-                          </span>
-                        </div>
-                      )
-                    )}
+                  <div className="grid gap-2">
+                    {(enhancedCatalog[selectedOtherIsmCode].feature_list || []).map((feature, idx) => (
+                      <div key={idx} className="flex gap-3 rounded-xl bg-white/70 p-3 shadow-sm">
+                        <span className="mt-2 flex h-1.5 w-1.5 shrink-0 rounded-full bg-teal-500" />
+                        <span className="text-[14px] leading-7 text-stone-700">{feature}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       )}
