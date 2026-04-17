@@ -12,7 +12,7 @@ import type {
 const DIGIT_MARKER_MAP: Record<1 | 2 | 3 | 4, string> = {
   1: "秩序",
   2: "冲突",
-  3: "中心",
+  3: "调和",
   4: "虚无",
 };
 
