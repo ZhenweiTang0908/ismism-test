@@ -223,10 +223,13 @@ const buildQuizResultPayload = ({
 };
 
 const voteToDigit = (voteCounter: Record<ChoiceValue, number>): 1 | 2 | 3 | 4 => {
-  let winner: ChoiceValue = "1";
+  // 平票优先级顺序: 2 > 3 > 4 > 1
+  const priorities: ChoiceValue[] = ["2", "3", "4", "1"];
+  let winner: ChoiceValue = priorities[0];
   let maxVotes = voteCounter[winner];
 
-  for (const candidate of ["2", "3", "4"] as const) {
+  for (let i = 1; i < priorities.length; i++) {
+    const candidate = priorities[i];
     if (voteCounter[candidate] > maxVotes) {
       winner = candidate;
       maxVotes = voteCounter[candidate];
