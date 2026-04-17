@@ -150,6 +150,8 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
   const [isOtherIsmsModalOpen, setIsOtherIsmsModalOpen] = useState(false);
   const [selectedOtherIsmCode, setSelectedOtherIsmCode] = useState<string>("1-1-1");
   const [isIsmDetailOpen, setIsIsmDetailOpen] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [shareError, setShareError] = useState("");
 
   const currentQuestion = questions[currentIndex];
   const currentQuestionNumber = currentIndex + 1;
@@ -325,6 +327,63 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
       window.setTimeout(() => {
         setCurrentIndex((index) => Math.min(index + 1, questions.length - 1));
       }, 120);
+    }
+  };
+
+  const downloadShareCard = async () => {
+    if (!response?.result) return;
+    setIsSharing(true);
+    setShareError("");
+    try {
+      const r = response.result;
+      const dims = Object.fromEntries(
+        r.dimensionResults.map((d) => [d.key, d])
+      );
+      const params = new URLSearchParams({
+        code: r.coreCode,
+        name: r.name,
+        ...(r.englishName ? { en: r.englishName } : {}),
+        ep: examplePeopleDisplay.name,
+        story: r.info.simpleStory || "",
+        fd: String(dims.field?.digit ?? ""),
+        fm: dims.field?.marker ?? "",
+        od: String(dims.ontology?.digit ?? ""),
+        om: dims.ontology?.marker ?? "",
+        pd: String(dims.phenomenon?.digit ?? ""),
+        pm: dims.phenomenon?.marker ?? "",
+      });
+      const url = `/api/share-card?${params.toString()}`;
+
+      const imgRes = await fetch(url);
+      if (!imgRes.ok) throw new Error("图片生成失败");
+      const blob = await imgRes.blob();
+      const fileName = `ismism-${r.coreCode}.png`;
+
+      // 移动端优先用 Web Share API
+      if (
+        typeof navigator !== "undefined" &&
+        navigator.share &&
+        navigator.canShare?.({ files: [new File([blob], fileName, { type: "image/png" })] })
+      ) {
+        await navigator.share({
+          files: [new File([blob], fileName, { type: "image/png" })],
+          title: `我的哲学倾向：${r.coreCode} ${r.name}`,
+        });
+      } else {
+        // 桌面端：直接下载
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = objectUrl;
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(objectUrl);
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name !== "AbortError") {
+        setShareError("图片保存失败，请重试。");
+      }
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -616,7 +675,33 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
           >
             查看其他主义
           </button>
+          <button
+            type="button"
+            onClick={downloadShareCard}
+            disabled={isSharing}
+            className="flex w-full items-center justify-center gap-2 rounded-full border border-teal-300 bg-gradient-to-r from-teal-50 to-emerald-50 px-5 py-3 text-sm font-medium text-teal-800 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-teal-400 hover:from-teal-100 hover:to-emerald-100 hover:shadow-[0_10px_24px_rgba(15,118,110,0.14)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          >
+            {isSharing ? (
+              <>
+                <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                生成中...
+              </>
+            ) : (
+              <>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                保存结果卡片
+              </>
+            )}
+          </button>
         </div>
+        {shareError ? (
+          <p className="text-sm text-red-600">{shareError}</p>
+        ) : null}
 
         <div className="mt-2 rounded-[1.4rem] border border-stone-200/60 bg-stone-50/60 px-5 py-4">
           <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-stone-400">参考信息</p>
