@@ -544,23 +544,23 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
             {[
               {
                 digit: 1,
-                title: "实在论",
-                desc: "如果第一个数字更接近 1，你通常会先把世界理解成一个本来就存在的现实背景。对象、环境、外部条件和既有秩序先于个人而存在，人需要先面对它、认识它，再决定怎么行动。",
+                title: "既有秩序",
+                desc: "如果你在这个维度选了 1，你通常会将世界看作一个预先存在的现实背景。规则、环境和秩序先于个人而存在，人需要先看清现实，再决定如何行动。",
               },
               {
                 digit: 2,
-                title: "形而上学",
-                desc: "如果第一个数字更接近 2，你往往不会停在表面现象，而会追问更底层的原则、结构和本质。你会觉得世界不是一堆散乱事件，而是有一套更深的安排在支撑它。",
+                title: "深层逻辑",
+                desc: "选 2 代表你不会只看表面现象，而是习惯追问背后的原则和机制。你会觉得世界不是杂乱无章的，而是有一套更深层的逻辑和结构在支撑。",
               },
               {
                 digit: 3,
-                title: "观念论",
-                desc: "如果第一个数字更接近 3，你更容易把世界看成离不开主体视角、意义和解释的背景。对你来说，世界不是一块完全独立的冷背景，它总会通过人的理解、意识和立场被组织起来。",
+                title: "视角意义",
+                desc: "选 3 说明你认为世界离不开个人的视角和解读。对你来说，现实总会通过人的理解、立场和赋予的意义被重新组织，主观感受非常重要。",
               },
               {
                 digit: 4,
-                title: "唯物主义",
-                desc: "如果第一个数字更接近 4，你更容易把世界理解成一个需要进入其中、在关系和实践里把握的现实场。你会更在意具体条件、行动过程以及现实是怎样被改变的，而不是只停在抽象原则上。",
+                title: "实践改造",
+                desc: "选 4 代表你更倾向于在行动和关系中把握现实。你会更在意具体的条件、行动的过程以及现实是如何被改变的，而不是单纯停留在抽象的原则上。",
               },
             ].map((item) => {
               const isSelected =
@@ -1026,22 +1026,22 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
               <div className="rounded-[1rem] border border-rose-200 bg-gradient-to-br from-rose-50 to-pink-100/60 p-3 sm:p-5">
                 <div className="font-serif text-3xl text-rose-700 sm:text-4xl">1</div>
                 <div className="mt-3 font-semibold text-stone-900 sm:mt-4">秩序</div>
-                <div className="mt-1 text-[12px] text-stone-500 sm:mt-2 sm:text-sm">规则先在</div>
+                <div className="mt-1 text-[12px] text-stone-500 sm:mt-2 sm:text-sm">环境规则</div>
               </div>
-              <div className="rounded-[1rem] border border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-100/60 p-3 sm:p-5">
+              <div className="rounded-[1rem] border border-amber-200 bg-gradient-to-br from-amber-50 to yellow-100/60 p-3 sm:p-5">
                 <div className="font-serif text-3xl text-amber-700 sm:text-4xl">2</div>
-                <div className="mt-3 font-semibold text-stone-900 sm:mt-4">冲突</div>
-                <div className="mt-1 text-[12px] text-stone-500 sm:mt-2 sm:text-sm">结构张力</div>
+                <div className="mt-3 font-semibold text-stone-900 sm:mt-4">机制</div>
+                <div className="mt-1 text-[12px] text-stone-500 sm:mt-2 sm:text-sm">深层逻辑</div>
               </div>
               <div className="rounded-[1rem] border border-violet-200 bg-gradient-to-br from-violet-50 to-purple-100/60 p-3 sm:p-5">
                 <div className="font-serif text-3xl text-violet-700 sm:text-4xl">3</div>
-                <div className="mt-3 font-semibold text-stone-900 sm:mt-4">调和</div>
-                <div className="mt-1 text-[12px] text-stone-500 sm:mt-2 sm:text-sm">主体参与</div>
+                <div className="mt-3 font-semibold text-stone-900 sm:mt-4">视角</div>
+                <div className="mt-1 text-[12px] text-stone-500 sm:mt-2 sm:text-sm">个人意义</div>
               </div>
               <div className="rounded-[1rem] border border-teal-200 bg-gradient-to-br from-teal-50 to-emerald-100/60 p-3 sm:p-5">
                 <div className="font-serif text-3xl text-teal-700 sm:text-4xl">4</div>
-                <div className="mt-3 font-semibold text-stone-900 sm:mt-4">虚无</div>
-                <div className="mt-1 text-[12px] text-stone-500 sm:mt-2 sm:text-sm">生成变化</div>
+                <div className="mt-3 font-semibold text-stone-900 sm:mt-4">实践</div>
+                <div className="mt-1 text-[12px] text-stone-500 sm:mt-2 sm:text-sm">动态重塑</div>
               </div>
             </div>
           </div>
