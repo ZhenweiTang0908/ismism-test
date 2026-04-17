@@ -163,25 +163,20 @@ const buildFallbackInfo = (
 });
 
 const calculateMatchRate = (dimensionResults: DimensionResult[]): number => {
-  // 科学计算方法：基于信息熵（Information Entropy）的决策一致性分析
-  // 1. 计算每个维度的归一化熵
-  // 2. 熵越低，代表用户的选择越聚焦，结果越“准确”
+  // 采用调和平均值（Harmonic Mean）算法
+  // 相比算术平均值，调和平均值对低分更加敏感，能更好地体现“三个维度必须都一致”的科学性
   
-  const scores = dimensionResults.map(d => {
-    // 简单的线性映射：如果一个人在某个维度选了 100% 同一个选项，CI=1.0
-    // 如果选得非常分散，CI 较低。
-    // 我们使用 (WinningPercentage - 25) / 75 作为一个基础一致度
-    const baseCI = Math.max(0, (d.percentage - 25) / 75);
-    return baseCI;
-  });
-
-  const avgCI = scores.reduce((a, b) => a + b, 0) / scores.length;
+  const percentages = dimensionResults.map(d => Math.max(d.percentage, 1));
   
-  // 非线性映射，使结果更符合“准确度”的直观感受
-  // 使用逻辑回归函数形状：80% 基础分 + 20% 的表现分
-  const finalRate = 75 + (avgCI * 25);
+  // 计算调和平均值: n / (Σ 1/p)
+  const harmonicSum = percentages.reduce((acc, p) => acc + (1 / p), 0);
+  const rawRate = dimensionResults.length / harmonicSum;
   
-  return round(Math.min(99.9, finalRate));
+  // 适度调整，使结果落在 40-100 的合理心理区间，而不是纯线性
+  // 这种调整依然保留了极大的区分度
+  const adjustedRate = rawRate * 0.8 + 15;
+  
+  return round(Math.min(99.9, adjustedRate));
 };
 
 const buildQuizResultPayload = ({
