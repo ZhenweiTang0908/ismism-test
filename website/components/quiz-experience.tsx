@@ -172,7 +172,7 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
       };
     };
 
-    const result: Record<string, typeof questions[0]["options"]> = {};
+    const result: Record<string, QuizQuestion["options"][number][]> = {};
     for (const q of questions) {
       const rand = seededRandom(q.id);
       const shuffled = [...q.options].sort(() => rand() - 0.5);
@@ -955,7 +955,7 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
                 onClick={() => recordAnswer(currentQuestion.id, option.value)}
                 className={`rounded-[1.35rem] border px-4 py-4 text-left transition duration-200 active:translate-y-0 sm:rounded-[1.65rem] sm:px-5 sm:py-[1.125rem] ${
                   selected
-                    ? `border-transparent bg-gradient-to-r ${optionToneMap[option.value]} scale-[1.01] shadow-[0_14px_34px_rgba(31,24,18,0.12)]`
+                    ? "border-teal-400 bg-gradient-to-r from-teal-100 to-emerald-200 text-teal-950 scale-[1.01] shadow-[0_14px_34px_rgba(15,118,110,0.18)]"
                     : `hover:-translate-y-0.5 ${optionIdleMap[option.value]}`
                 }`}
               >
@@ -963,7 +963,7 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
                   <span
                     className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[11px] ${
                       selected
-                        ? optionDotMap[option.value]
+                        ? "border-teal-600 bg-teal-600 text-white"
                         : "border-stone-300 bg-white text-transparent"
                     }`}
                     aria-hidden="true"
