@@ -57,6 +57,7 @@ export async function GET(req: NextRequest) {
     const examplePeople = searchParams.get("ep") ?? "";
     const story = searchParams.get("story") ?? "";
     const userName = searchParams.get("uname") ?? "";
+    const rate = searchParams.get("rate") ?? "0";
     const fd = searchParams.get("fd") ?? "?";
     const fm = searchParams.get("fm") ?? "—";
     const od = searchParams.get("od") ?? "?";
@@ -175,16 +176,48 @@ export async function GET(req: NextRequest) {
             <div
               style={{ flex: 1, display: "flex", flexDirection: "column" }}
             >
-              <div
-                style={{
-                  fontSize: 82,
-                  fontWeight: 700,
-                  letterSpacing: "-0.04em",
-                  lineHeight: 1,
-                  color: "#1c1917",
-                }}
-              >
-                {code}
+              <div style={{ display: "flex", alignItems: "baseline", gap: 24 }}>
+                <div
+                  style={{
+                    fontSize: 82,
+                    fontWeight: 700,
+                    letterSpacing: "-0.04em",
+                    lineHeight: 1,
+                    color: "#1c1917",
+                  }}
+                >
+                  {code}
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    paddingLeft: 24,
+                    borderLeft: "1px solid rgba(28, 25, 23, 0.12)",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color: "#a8a29e",
+                      letterSpacing: "0.15em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    准确度
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 24,
+                      fontWeight: 700,
+                      color: "#44403c",
+                      marginTop: 2,
+                    }}
+                  >
+                    {rate}%
+                  </span>
+                </div>
               </div>
 
               {/* 渐变分隔线 */}

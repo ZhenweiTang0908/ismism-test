@@ -80,6 +80,7 @@ export type QuizResult = {
     examplePeople: string;
     simpleStory: string;
   };
+  matchRate: number;
 };
 
 export type QuizResultAiInterpretation = {

@@ -346,6 +346,7 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
         ep: examplePeopleDisplay.name,
         story: r.info.simpleStory || "",
         uname: profile.name || "",
+        rate: String(r.matchRate),
         fd: String(dims.field?.digit ?? ""),
         fm: dims.field?.marker ?? "",
         od: String(dims.ontology?.digit ?? ""),
@@ -457,9 +458,17 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
           <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-stone-500">测试结果</p>
-              <h2 className="mt-4 font-serif text-[clamp(3.8rem,10vw,6.8rem)] font-semibold leading-none tracking-[-0.05em] bg-[linear-gradient(135deg,#1c1917,#0f766e_45%,#7c3aed)] bg-clip-text text-transparent">
-                {response.result.coreCode}
-              </h2>
+              <div className="mt-4 flex items-baseline gap-6">
+                <h2 className="font-serif text-[clamp(3.8rem,10vw,6.8rem)] font-semibold leading-none tracking-[-0.05em] bg-[linear-gradient(135deg,#1c1917,#0f766e_45%,#7c3aed)] bg-clip-text text-transparent">
+                  {response.result.coreCode}
+                </h2>
+                <div className="flex flex-col border-l border-stone-200 pl-6">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400">分析准确度</span>
+                  <span className="mt-1 font-serif text-3xl font-bold text-stone-800">
+                    {response.result.matchRate}<span className="text-lg ml-0.5 text-stone-400">%</span>
+                  </span>
+                </div>
+              </div>
               <p className="mt-4 text-[1.85rem] font-semibold leading-tight text-stone-950 sm:text-[2.4rem]">
                 {response.result.name}
               </p>
