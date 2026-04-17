@@ -1,9 +1,10 @@
-import { buildQuizResult, getAnswerLabel } from "@/lib/ismism/scoring";
+import { buildQuizResult } from "@/lib/ismism/scoring";
 import { getEnhancedIsmCatalog, getQuizQuestions } from "@/lib/ismism/data";
-import { AGREEMENT_OPTIONS } from "@/lib/ismism/types";
+import { CHOICE_VALUES } from "@/lib/ismism/types";
 import type {
-  AgreementValue,
   AnswerMap,
+  ChoiceValue,
+  QuizQuestion,
   RespondentProfile,
 } from "@/lib/ismism/types";
 import { createAdminClient } from "@/utils/supabase/admin";
@@ -25,9 +26,7 @@ const CLIENT_TABLE_NAMES = [
   "ismism-client",
 ].filter((value): value is string => Boolean(value));
 
-const VALID_AGREEMENTS = new Set<AgreementValue>(
-  AGREEMENT_OPTIONS.map((option) => option.value),
-);
+const VALID_CHOICES = new Set<ChoiceValue>(CHOICE_VALUES);
 
 const normalizeProfile = (input: unknown): RespondentProfile => {
   if (!input || typeof input !== "object") {
@@ -48,7 +47,7 @@ const normalizeProfile = (input: unknown): RespondentProfile => {
 
 const normalizeAnswers = (
   input: unknown,
-  questionIds: Set<string>,
+  questionsById: Map<string, QuizQuestion>,
 ): AnswerMap | null => {
   if (!input || typeof input !== "object") {
     return null;
@@ -58,19 +57,34 @@ const normalizeAnswers = (
   const answers: AnswerMap = {};
 
   for (const [questionId, value] of Object.entries(source)) {
-    if (!questionIds.has(questionId) || typeof value !== "string") {
+    const question = questionsById.get(questionId);
+    if (!question || typeof value !== "string") {
       continue;
     }
 
-    if (!VALID_AGREEMENTS.has(value as AgreementValue)) {
+    const selected = value as ChoiceValue;
+    if (!VALID_CHOICES.has(selected)) {
       continue;
     }
 
-    answers[questionId] = value as AgreementValue;
+    const validForQuestion = question.options.some(
+      (option) => option.value === selected,
+    );
+    if (!validForQuestion) {
+      continue;
+    }
+
+    answers[questionId] = selected;
   }
 
   return answers;
 };
+
+const getSelectedOptionLabel = (
+  question: QuizQuestion,
+  selected: ChoiceValue,
+) =>
+  question.options.find((option) => option.value === selected)?.label ?? selected;
 
 const isMissingTableError = (message: string) =>
   message.includes("Could not find the table") ||
@@ -113,8 +127,8 @@ export async function POST(request: Request) {
       getEnhancedIsmCatalog(),
     ]);
 
-    const questionIds = new Set(questions.map((question) => question.id));
-    const answers = normalizeAnswers(payload.answers, questionIds);
+    const questionsById = new Map(questions.map((question) => [question.id, question]));
+    const answers = normalizeAnswers(payload.answers, questionsById);
 
     if (!answers || Object.keys(answers).length !== questions.length) {
       return Response.json(
@@ -135,7 +149,7 @@ export async function POST(request: Request) {
     const answersPayload = questions.map((question) => ({
       client_id: result.clientId,
       question: question.question,
-      answer: getAnswerLabel(answers[question.id]),
+      answer: getSelectedOptionLabel(question, answers[question.id]),
       created_at: result.createdAt,
     }));
 

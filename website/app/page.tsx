@@ -17,7 +17,7 @@ export default async function Home() {
             </span>
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-7 text-stone-700 sm:text-base sm:leading-8">
-            24 道题，得到一组属于你的三位结果代码。
+            {questions.length} 道四选一选择题，得到一组属于你的三位结果代码。
           </p>
         </header>
 

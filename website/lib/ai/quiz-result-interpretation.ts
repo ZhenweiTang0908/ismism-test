@@ -111,20 +111,17 @@ const buildSystemPrompt = () => `
 8. 返回必须是 JSON 对象，不要包含 Markdown 代码块，不要输出额外说明。
 9. JSON 结构必须包含以下字段：
 {
-  "resultSummary": "这个结果是什么",
-  "simpleExplanation": "通俗解释",
-  "exampleScenario": "举例说明",
+  "simpleExplanation": "通俗解读，大概350字左右，结合该结果的整体表现进行详细的现代生活视角的解释。",
   "dimensionInterpretations": [
     {
-      "explanation": "针对单个维度的解释"
+      "explanation": "对每个维度的解读。格式要求：先来一句抽象哲学的准确说明，然后接着用通俗语言解释。"
     }
   ]
 }
 10. dimensionInterpretations 必须严格返回 3 项，顺序与输入中的 axis_list 一致。
-11. 控制篇幅：resultSummary 尽量在 80 到 110 字，simpleExplanation 尽量在 90 到 130 字，exampleScenario 尽量在 70 到 110 字。
-12. 每个 dimensionInterpretations[i].explanation 尽量控制在 55 到 85 字，1 到 2 句即可。
-13. 避免同义反复、铺陈和套话，优先直接说重点。
-14. 结果页除主结果卡和 simple_story 外，其余说明都由你生成，所以不要假设页面还会显示固定的维度说明卡。
+11. 控制篇幅：simpleExplanation 尽量在 350 字左右。每个 dimensionInterpretations[i].explanation 尽量控制在 80 到 120 字。
+12. 避免同义反复、铺陈和套话，优先直接说重点。
+13. 结果页除主结果卡和 simple_story 外，其余说明都由你生成，所以不要假设页面还会显示固定的维度说明卡。
 `.trim();
 
 const buildUserPrompt = (overviewText: string, result: QuizResult) =>
@@ -252,9 +249,7 @@ const shortenText = (value: string, maxLength: number) => {
 };
 
 const buildFallbackInterpretation = (result: QuizResult): QuizResultAiInterpretation => ({
-  resultSummary: `${result.name}（${result.coreCode}）表示你看世界时，会沿着一套相对稳定的理解路径走。它不是成绩高低，而是在描述你更自然会从哪些角度进入现实。`,
-  simpleExplanation: `换成大白话，就是你脑子里有一套默认的看问题顺序。遇到事情时，你会本能地先抓住某些部分，再据此判断什么更重要。`,
-  exampleScenario: `比如面对一条新规则，有的人先看规则本身，有的人先看背后是谁在推动，也有人先看自己的感受。你的结果就是在说明你通常更像哪一种。`,
+  simpleExplanation: `${result.name}（${result.coreCode}）表示你看世界时，会沿着一套相对稳定的理解路径走。它不是成绩高低，而是在描述你更自然会从哪些角度进入现实。换成大白话，就是你脑子里有一套默认的看问题顺序。遇到事情时，你会本能地先抓住某些部分，再据此判断什么更重要。`,
   dimensionInterpretations: result.dimensionResults.map((item) => ({
     key: item.key,
     label: item.label,
@@ -274,17 +269,9 @@ const normalizeInterpretation = (
     : [];
 
   return {
-    resultSummary: shortenText(
-      getLongText(raw.resultSummary, fallback.resultSummary, 24),
-      108,
-    ),
     simpleExplanation: shortenText(
       getLongText(raw.simpleExplanation, fallback.simpleExplanation, 32),
-      128,
-    ),
-    exampleScenario: shortenText(
-      getLongText(raw.exampleScenario, fallback.exampleScenario, 32),
-      108,
+      800,
     ),
     dimensionInterpretations: result.dimensionResults.map((item, index) => {
       const source = rawDimensions[index];

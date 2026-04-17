@@ -13,44 +13,22 @@ export const DIMENSION_LABELS: Record<DimensionKey, string> = {
 };
 
 export const QUESTION_TYPE_WEIGHTS = {
+  life: 1,
+  public: 1,
   abstract: 1,
-  personal: 1,
-  art: 1,
 } as const;
 
 export type QuestionType = keyof typeof QUESTION_TYPE_WEIGHTS;
 
-export const AGREEMENT_OPTIONS = [
-  {
-    value: "strongly_disagree",
-    label: "非常不同意",
-    ratio: 0,
-  },
-  {
-    value: "disagree",
-    label: "不同意",
-    ratio: 0.3,
-  },
-  {
-    value: "neutral",
-    label: "中立",
-    ratio: 0.5,
-  },
-  {
-    value: "agree",
-    label: "同意",
-    ratio: 0.8,
-  },
-  {
-    value: "strongly_agree",
-    label: "非常同意",
-    ratio: 1,
-  },
-] as const;
+export const CHOICE_VALUES = ["1", "2", "3", "4"] as const;
+export type ChoiceValue = (typeof CHOICE_VALUES)[number];
 
-export type AgreementValue = (typeof AGREEMENT_OPTIONS)[number]["value"];
+export type AnswerMap = Record<string, ChoiceValue>;
 
-export type AnswerMap = Record<string, AgreementValue>;
+export type QuizOption = {
+  value: ChoiceValue;
+  label: string;
+};
 
 export type QuizQuestion = {
   id: string;
@@ -59,6 +37,7 @@ export type QuizQuestion = {
   dimensionLabel: string;
   type: QuestionType;
   weight: number;
+  options: [QuizOption, QuizOption, QuizOption, QuizOption];
   source: "dataset" | "mock";
 };
 
@@ -104,9 +83,7 @@ export type QuizResult = {
 };
 
 export type QuizResultAiInterpretation = {
-  resultSummary: string;
   simpleExplanation: string;
-  exampleScenario: string;
   dimensionInterpretations: Array<{
     key: DimensionKey;
     label: string;
