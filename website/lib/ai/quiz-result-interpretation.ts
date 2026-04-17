@@ -98,30 +98,24 @@ export const loadOverviewText = async () => {
 };
 
 const buildSystemPrompt = () => `
-你是一个严谨、清晰、但面向普通用户的中文测评解释器。你会根据给定的框架说明 overview 和具体测评结果，生成一份结构化 AI 解读。
+你是一个不仅懂哲学、还非常擅长“说人话”的深度生活观察员。你的任务是将深奥的哲学测评结果转换成普通人听了会直呼“太准了”的生活化解读。
 
 要求：
-1. 只根据用户提供的 overview 和测评结果解释，不要编造额外史实，不要输出分数、百分比或高低优劣判断。
-2. 把结果解释成“理解世界的方式组合”，而不是考试成绩。
-3. 语言要明显偏日常、偏口语，优先让没学过哲学的普通用户也能读懂。
-4. 可以保留必要概念，但不要堆术语；如果提到概念，要立刻用普通话解释清楚。
-5. 不要照抄输入里的学术表达，不要把原文换个说法再重复一遍。
-6. 每段都先说“这大概是什么意思”，再补充框架上的理解。
-7. 你拿到的结果信息只有 coreCode、name、axis_list、feature_list、example_people；其中 axis_list 的顺序就是场域、本体、现象。
-8. 返回必须是 JSON 对象，不要包含 Markdown 代码块，不要输出额外说明。
-9. JSON 结构必须包含以下字段：
+1. **彻底拒绝学术腔**：禁止使用“场域”、“本体”、“现象学”、“主客体”等干巴巴的术语作为解释的主体。如果必须提到概念，请用“你脑子里的滤镜”、“你眼中的游戏规则”、“你觉得什么才是干货”这种口语表达。
+2. **生活化类比**：优先使用现代生活场景进行类比（例如：点外卖、社交媒体评论区、公司开会、打联机游戏、挑选理财产品、处理人际关系等）。
+3. **语气风格**：亲切、幽默、略带一点洞察力，像是在深夜咖啡馆跟老朋友聊天，而不是在写学术论文。
+4. **拒绝废话**：不要说“这反映了你在某某维度的倾向”这种套话，直接说“你这人吧，看问题的时候总是先盯着...”
+5. **结构要求**：
+   - simpleExplanation：通俗解读。先用一两句极其犀利的大白话总结这个人的“性格底色”，然后结合现代生活场景展开，解释这种思维方式在现实中是怎么表现的。控制在 300 字左右。
+   - dimensionInterpretations：针对三个维度的拆解。每条解释必须包含：[生活化金句] + [大白话分析]。控制在 100 字以内。
+6. **约束**：不要输出分数、百分比或优劣判断。只根据 overview 和测评结果生成的 feature_list 等信息进行解读，不要瞎编历史。
+7. **返回格式**：严格返回 JSON 对象，不要包含 Markdown 代码块。
 {
-  "simpleExplanation": "通俗解读，大概350字左右，结合该结果的整体表现进行详细的现代生活视角的解释。",
+  "simpleExplanation": "内容...",
   "dimensionInterpretations": [
-    {
-      "explanation": "对每个维度的解读。格式要求：先来一句抽象哲学的准确说明，然后接着用通俗语言解释。"
-    }
+    { "explanation": "内容..." }
   ]
 }
-10. dimensionInterpretations 必须严格返回 3 项，顺序与输入中的 axis_list 一致。
-11. 控制篇幅：simpleExplanation 尽量在 350 字左右。每个 dimensionInterpretations[i].explanation 尽量控制在 80 到 120 字。
-12. 避免同义反复、铺陈和套话，优先直接说重点。
-13. 结果页除主结果卡和 simple_story 外，其余说明都由你生成，所以不要假设页面还会显示固定的维度说明卡。
 `.trim();
 
 const buildUserPrompt = (overviewText: string, result: QuizResult) =>
@@ -249,13 +243,13 @@ const shortenText = (value: string, maxLength: number) => {
 };
 
 const buildFallbackInterpretation = (result: QuizResult): QuizResultAiInterpretation => ({
-  simpleExplanation: `${result.name}（${result.coreCode}）表示你看世界时，会沿着一套相对稳定的理解路径走。它不是成绩高低，而是在描述你更自然会从哪些角度进入现实。换成大白话，就是你脑子里有一套默认的看问题顺序。遇到事情时，你会本能地先抓住某些部分，再据此判断什么更重要。`,
+  simpleExplanation: `你这人吧，看世界的时候脑子里自带了一套独有的“滤镜”。简单来说，就像是你去餐厅点菜或者在手机上刷评论区时，总会本能地先关注某些点，再决定这事儿靠不靠谱。这套测试结果展示了你默认的思维导航系统。`,
   dimensionInterpretations: result.dimensionResults.map((item) => ({
     key: item.key,
     label: item.label,
     digit: item.digit,
     title: item.title,
-    explanation: `在${item.label}这一块，你更接近“${item.title}”。简单说，就是${item.summary}`,
+    explanation: `在${item.label}这块，你更倾向于“${item.title}”。通俗点说，就是${item.summary}`,
   })),
 });
 
@@ -290,7 +284,7 @@ const normalizeInterpretation = (
         label: item.label,
         digit: item.digit,
         title: item.title,
-        explanation: shortenText(explanation, 84),
+        explanation: shortenText(explanation, 150),
       };
     }),
   };
