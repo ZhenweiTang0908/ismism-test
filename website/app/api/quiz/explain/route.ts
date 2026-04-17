@@ -32,6 +32,8 @@ const normalizeQuizResult = (input: unknown): QuizResult | null => {
     return null;
   }
 
+  const matchRate = typeof source.matchRate === "number" ? source.matchRate : 0;
+
   const dimensionResults = source.dimensionResults
     .map((item) => {
       if (!item || typeof item !== "object") {
@@ -48,7 +50,8 @@ const normalizeQuizResult = (input: unknown): QuizResult | null => {
         typeof record.percentage !== "number" ||
         typeof record.digit !== "number" ||
         typeof record.title !== "string" ||
-        typeof record.summary !== "string"
+        typeof record.summary !== "string" ||
+        typeof record.marker !== "string"
       ) {
         return null;
       }
@@ -64,6 +67,7 @@ const normalizeQuizResult = (input: unknown): QuizResult | null => {
         maxScore: record.maxScore,
         percentage: record.percentage,
         digit: record.digit as 1 | 2 | 3 | 4,
+        marker: record.marker,
         title: record.title,
         summary: record.summary,
       };
@@ -92,6 +96,7 @@ const normalizeQuizResult = (input: unknown): QuizResult | null => {
     name: source.name,
     englishName: source.englishName,
     dimensionResults,
+    matchRate,
     info: {
       axisList,
       featureList,
