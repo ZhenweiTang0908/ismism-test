@@ -89,6 +89,7 @@ export type QuizResultAiInterpretation = {
     key: DimensionKey;
     label: string;
     digit: 1 | 2 | 3 | 4;
+    marker: string;
     title: string;
     explanation: string;
   }>;

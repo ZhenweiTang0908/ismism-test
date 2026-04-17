@@ -72,9 +72,9 @@ const conciseDimensionLabelMap = {
 } as const;
 
 const dimensionCaptionMap = {
-  field: "世界怎样被组织",
-  ontology: "什么算作关键存在",
-  phenomenon: "现实如何向人显现",
+  field: "世界是什么样",
+  ontology: "事物怎么存在",
+  phenomenon: "怎么认识世界",
 } as const;
 
 const splitExamplePeople = (value: string) => {
@@ -628,14 +628,19 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
                 {aiInterpretation.dimensionInterpretations.map((item) => (
                   <article
                     key={item.key}
-                    className={`rounded-[1.2rem] border p-4 ${dimensionToneMap[item.key].panel}`}
+                    className={`rounded-[1.4rem] border p-6 shadow-sm ${dimensionToneMap[item.key].panel}`}
                   >
-                    <p className="text-sm text-stone-500">{dimensionCaptionMap[item.key]}</p>
-                    <div className="mt-1 flex items-baseline gap-2">
-                      <span className="text-lg font-semibold text-stone-900">{item.label} ({item.digit})</span>
-                      <span className="text-sm font-medium text-stone-700">{item.title}</span>
+                    <p className="text-2xl font-bold text-stone-900 mb-2">
+                      {item.label}：{dimensionCaptionMap[item.key]}
+                    </p>
+                    <div className="mb-4">
+                      <span className="text-xl font-semibold text-stone-700">
+                        {item.marker || "分析中..."}
+                      </span>
                     </div>
-                    <p className="mt-3 text-sm leading-7 text-stone-700">{item.explanation}</p>
+                    <p className="text-[15px] leading-8 text-stone-700">
+                      {item.explanation}
+                    </p>
                   </article>
                 ))}
               </div>
@@ -1081,8 +1086,14 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
           </ul>
         </div>
 
-        <div className="flex flex-col items-end gap-3">
-          {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        <div className="flex flex-col items-end gap-3 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={() => setIsOtherIsmsModalOpen(true)}
+            className="rounded-full border border-stone-200 bg-white/80 px-4 py-2 text-sm text-stone-600 transition duration-200 hover:border-teal-200 hover:bg-teal-50 hover:text-teal-900"
+          >
+            查看其他主义
+          </button>
           <button
             type="button"
             onClick={openPreviewResult}

@@ -248,6 +248,7 @@ const buildFallbackInterpretation = (result: QuizResult): QuizResultAiInterpreta
     key: item.key,
     label: item.label,
     digit: item.digit,
+    marker: item.marker,
     title: item.title,
     explanation: `在${item.label}这块，你更倾向于“${item.title}”。通俗点说，就是${item.summary}`,
   })),
@@ -283,6 +284,7 @@ const normalizeInterpretation = (
         key: item.key,
         label: item.label,
         digit: item.digit,
+        marker: item.marker,
         title: item.title,
         explanation: shortenText(explanation, 150),
       };
