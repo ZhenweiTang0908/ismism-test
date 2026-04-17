@@ -1,8 +1,11 @@
 import QuizExperience from "@/components/quiz-experience";
-import { getQuizQuestions } from "@/lib/ismism/data";
+import { getEnhancedIsmCatalog, getQuizQuestions } from "@/lib/ismism/data";
 
 export default async function Home() {
-  const questions = await getQuizQuestions();
+  const [questions, enhancedCatalog] = await Promise.all([
+    getQuizQuestions(),
+    getEnhancedIsmCatalog(),
+  ]);
 
   return (
     <main className="relative overflow-hidden px-4 py-6 text-stone-950 sm:px-6 sm:py-8 lg:px-10 lg:py-12">
@@ -21,7 +24,7 @@ export default async function Home() {
           </p>
         </header>
 
-        <QuizExperience questions={questions} />
+        <QuizExperience questions={questions} enhancedCatalog={enhancedCatalog} />
       </div>
     </main>
   );

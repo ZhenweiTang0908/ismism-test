@@ -173,14 +173,12 @@ export async function POST(request: Request) {
       const [answersTable, resultsTable, clientTable] = await Promise.all([
         insertIntoFirstAvailableTable(ANSWERS_TABLE_NAMES, answersPayload),
         insertIntoFirstAvailableTable(RESULTS_TABLE_NAMES, resultPayload),
-        respondent.name || respondent.message
-          ? insertIntoFirstAvailableTable(CLIENT_TABLE_NAMES, {
-              created_at: result.createdAt,
-              name: respondent.name || null,
-              message: respondent.message || null,
-              client_id: result.clientId,
-            })
-          : Promise.resolve<string | undefined>(undefined),
+        insertIntoFirstAvailableTable(CLIENT_TABLE_NAMES, {
+          created_at: result.createdAt,
+          name: respondent.name || "anonym",
+          message: respondent.message || null,
+          client_id: result.clientId,
+        }),
       ]);
 
       return Response.json({

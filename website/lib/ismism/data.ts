@@ -46,8 +46,8 @@ const COLLATOR = new Intl.Collator("zh-CN", {
   sensitivity: "base",
 });
 
-const shuffleQuestions = (questions: QuizQuestion[]) => {
-  const randomized = [...questions];
+const shuffleArray = <T>(array: T[]): T[] => {
+  const randomized = [...array];
 
   for (let index = randomized.length - 1; index > 0; index -= 1) {
     const swapIndex = Math.floor(Math.random() * (index + 1));
@@ -59,6 +59,8 @@ const shuffleQuestions = (questions: QuizQuestion[]) => {
 
   return randomized;
 };
+
+const shuffleQuestions = (questions: QuizQuestion[]) => shuffleArray(questions);
 
 const normalizeDimension = (value?: string): DimensionKey | null => {
   switch (value?.trim().toLowerCase()) {
@@ -164,7 +166,7 @@ const normalizeDatasetQuestion = (
     dimensionLabel: DIMENSION_LABELS[dimension],
     type,
     weight: QUESTION_TYPE_WEIGHTS[type],
-    options,
+    options: shuffleArray(options) as [QuizOption, QuizOption, QuizOption, QuizOption],
     source: "dataset",
   };
 };
