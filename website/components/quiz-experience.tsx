@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useEffect, useState } from "react";
+import { startTransition, useEffect, useMemo, useState } from "react";
 
 import type {
   AnswerMap,
@@ -27,27 +27,41 @@ type QuizExperienceProps = {
 };
 
 const optionToneMap: Record<ChoiceValue, string> = {
-  "1": "from-stone-100 to-stone-200 text-stone-800",
-  "2": "from-orange-100 to-amber-100 text-amber-950",
-  "3": "from-zinc-100 to-zinc-200 text-zinc-900",
-  "4": "from-teal-200 to-cyan-200 text-teal-950",
+  "1": "from-rose-100 to-pink-200 text-rose-900",
+  "2": "from-amber-100 to-orange-200 text-amber-950",
+  "3": "from-violet-100 to-purple-200 text-violet-900",
+  "4": "from-teal-100 to-emerald-200 text-teal-950",
+};
+
+const optionIdleMap: Record<ChoiceValue, string> = {
+  "1": "border-rose-200/60 bg-rose-50/40 text-stone-700 hover:border-rose-300 hover:bg-rose-50 hover:shadow-[0_12px_26px_rgba(225,29,72,0.06)]",
+  "2": "border-amber-200/60 bg-amber-50/40 text-stone-700 hover:border-amber-300 hover:bg-amber-50 hover:shadow-[0_12px_26px_rgba(245,158,11,0.06)]",
+  "3": "border-violet-200/60 bg-violet-50/40 text-stone-700 hover:border-violet-300 hover:bg-violet-50 hover:shadow-[0_12px_26px_rgba(139,92,246,0.06)]",
+  "4": "border-teal-200/60 bg-teal-50/40 text-stone-700 hover:border-teal-300 hover:bg-teal-50 hover:shadow-[0_12px_26px_rgba(20,184,166,0.06)]",
+};
+
+const optionDotMap: Record<ChoiceValue, string> = {
+  "1": "border-rose-400 bg-rose-400 text-white",
+  "2": "border-amber-500 bg-amber-500 text-white",
+  "3": "border-violet-500 bg-violet-500 text-white",
+  "4": "border-teal-500 bg-teal-500 text-white",
 };
 
 const dimensionToneMap = {
   field: {
-    badge: "border-amber-200 bg-amber-50 text-amber-900",
+    badge: "border-amber-300 bg-amber-100 text-amber-800 font-semibold",
     panel:
-      "border-amber-200/70 bg-[linear-gradient(145deg,rgba(255,251,235,0.95),rgba(255,255,255,0.92))]",
+      "border-amber-200 bg-[linear-gradient(145deg,rgba(255,247,205,0.95),rgba(255,255,255,0.9))]",
   },
   ontology: {
-    badge: "border-teal-200 bg-teal-50 text-teal-900",
+    badge: "border-teal-300 bg-teal-100 text-teal-800 font-semibold",
     panel:
-      "border-teal-200/70 bg-[linear-gradient(145deg,rgba(240,253,250,0.95),rgba(255,255,255,0.92))]",
+      "border-teal-200 bg-[linear-gradient(145deg,rgba(204,251,241,0.95),rgba(255,255,255,0.9))]",
   },
   phenomenon: {
-    badge: "border-sky-200 bg-sky-50 text-sky-900",
+    badge: "border-violet-300 bg-violet-100 text-violet-800 font-semibold",
     panel:
-      "border-sky-200/70 bg-[linear-gradient(145deg,rgba(240,249,255,0.96),rgba(255,255,255,0.92))]",
+      "border-violet-200 bg-[linear-gradient(145deg,rgba(237,233,254,0.95),rgba(255,255,255,0.9))]",
   },
 } as const;
 
@@ -142,6 +156,32 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
   const remainingCount = questions.length - answeredCount;
   const progress = phase === "quiz" ? (answeredCount / questions.length) * 100 : 0;
   const allAnswered = answeredCount === questions.length;
+
+  // 为每道题预先生成稳定的选项乱序（以题目 id 为种子，同一题回来顺序不变）
+  const shuffledOptionsMap = useMemo(() => {
+    const seededRandom = (seed: string) => {
+      let h = 0;
+      for (let i = 0; i < seed.length; i++) {
+        h = (Math.imul(31, h) + seed.charCodeAt(i)) | 0;
+      }
+      return () => {
+        h ^= h << 13;
+        h ^= h >> 17;
+        h ^= h << 5;
+        return ((h >>> 0) / 4294967296);
+      };
+    };
+
+    const result: Record<string, typeof questions[0]["options"]> = {};
+    for (const q of questions) {
+      const rand = seededRandom(q.id);
+      const shuffled = [...q.options].sort(() => rand() - 0.5);
+      result[q.id] = shuffled;
+    }
+    return result;
+  }, [questions]);
+
+  const shuffledOptions = shuffledOptionsMap[currentQuestion?.id] ?? currentQuestion?.options ?? [];
   const examplePeopleDisplay = response?.result?.info.examplePeople
     ? splitExamplePeople(response.result.info.examplePeople)
     : { name: "暂无典型人物", description: "" };
@@ -356,7 +396,7 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
           <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-stone-500">测试结果</p>
-              <h2 className="mt-4 font-serif text-[clamp(3.8rem,10vw,6.8rem)] font-semibold leading-none tracking-[-0.05em] text-stone-950">
+              <h2 className="mt-4 font-serif text-[clamp(3.8rem,10vw,6.8rem)] font-semibold leading-none tracking-[-0.05em] bg-[linear-gradient(135deg,#1c1917,#0f766e_45%,#7c3aed)] bg-clip-text text-transparent">
                 {response.result.coreCode}
               </h2>
               <p className="mt-4 text-[1.85rem] font-semibold leading-tight text-stone-950 sm:text-[2.4rem]">
@@ -383,26 +423,43 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
               ) : null}
 
               <div className="mt-8 grid grid-cols-3 gap-2 sm:gap-4">
-                {response.result.dimensionResults.map((item) => (
-                  <div
-                    key={item.key}
-                    className="rounded-[1rem] border border-stone-200/60 bg-white p-4 shadow-sm"
-                  >
-                    <p className="text-[15px] font-semibold text-stone-900">
-                      {item.key === "phenomenon" ? "认识" : conciseDimensionLabelMap[item.key]}
-                    </p>
-                    <p className="mt-1.5 text-[12px] text-stone-400">
-                      {item.key === "field"
-                        ? "世界是什么样"
-                        : item.key === "ontology"
-                          ? "事物怎么存在"
-                          : "怎么认识世界"}
-                    </p>
-                    <p className="mt-4 text-[16px] font-bold text-stone-900 sm:text-[1.1rem]">
-                      {item.marker}
-                    </p>
-                  </div>
-                ))}
+                {response.result.dimensionResults.map((item) => {
+                  const cardColorMap = {
+                    field: "border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-100/60",
+                    ontology: "border-teal-200 bg-gradient-to-br from-teal-50 to-emerald-100/60",
+                    phenomenon: "border-violet-200 bg-gradient-to-br from-violet-50 to-purple-100/60",
+                  } as const;
+                  const labelColorMap = {
+                    field: "text-amber-800",
+                    ontology: "text-teal-800",
+                    phenomenon: "text-violet-800",
+                  } as const;
+                  const markerColorMap = {
+                    field: "text-amber-900",
+                    ontology: "text-teal-900",
+                    phenomenon: "text-violet-900",
+                  } as const;
+                  return (
+                    <div
+                      key={item.key}
+                      className={`rounded-[1rem] border p-4 shadow-sm ${cardColorMap[item.key]}`}
+                    >
+                      <p className={`text-[15px] font-semibold ${labelColorMap[item.key]}`}>
+                        {item.key === "phenomenon" ? "认识" : conciseDimensionLabelMap[item.key]}
+                      </p>
+                      <p className="mt-1.5 text-[12px] text-stone-400">
+                        {item.key === "field"
+                          ? "世界是什么样"
+                          : item.key === "ontology"
+                            ? "事物怎么存在"
+                            : "怎么认识世界"}
+                      </p>
+                      <p className={`mt-4 text-[16px] font-bold sm:text-[1.1rem] ${markerColorMap[item.key]}`}>
+                        {item.marker}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -751,17 +808,17 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
             </p>
 
             <div className="mt-6 grid grid-cols-3 gap-3">
-              <div className="rounded-[1rem] border border-amber-200/60 bg-amber-50/40 p-4 sm:p-5">
-                <div className="font-semibold text-stone-900">场域</div>
-                <div className="mt-2 text-[13px] text-stone-600 sm:mt-3 sm:text-sm">世界是什么样</div>
+              <div className="rounded-[1rem] border border-amber-300/70 bg-gradient-to-br from-amber-50 to-yellow-100/70 p-4 sm:p-5">
+                <div className="font-semibold text-amber-900">场域</div>
+                <div className="mt-2 text-[13px] text-amber-700 sm:mt-3 sm:text-sm">世界是什么样</div>
               </div>
-              <div className="rounded-[1rem] border border-teal-200/60 bg-teal-50/40 p-4 sm:p-5">
-                <div className="font-semibold text-stone-900">本体</div>
-                <div className="mt-2 text-[13px] text-stone-600 sm:mt-3 sm:text-sm">自我如何存在</div>
+              <div className="rounded-[1rem] border border-teal-300/70 bg-gradient-to-br from-teal-50 to-emerald-100/70 p-4 sm:p-5">
+                <div className="font-semibold text-teal-900">本体</div>
+                <div className="mt-2 text-[13px] text-teal-700 sm:mt-3 sm:text-sm">自我如何存在</div>
               </div>
-              <div className="rounded-[1rem] border border-sky-200/60 bg-sky-50/40 p-4 sm:p-5">
-                <div className="font-semibold text-stone-900">现象</div>
-                <div className="mt-2 text-[13px] text-stone-600 sm:mt-3 sm:text-sm">如何认识世界</div>
+              <div className="rounded-[1rem] border border-violet-300/70 bg-gradient-to-br from-violet-50 to-purple-100/70 p-4 sm:p-5">
+                <div className="font-semibold text-violet-900">现象</div>
+                <div className="mt-2 text-[13px] text-violet-700 sm:mt-3 sm:text-sm">如何认识世界</div>
               </div>
             </div>
 
@@ -770,23 +827,23 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
             </p>
 
             <div className="mt-6 grid grid-cols-4 gap-2 sm:gap-3">
-              <div className="rounded-[1rem] border border-stone-200 bg-white p-3 sm:p-5">
-                <div className="font-serif text-3xl text-stone-900 sm:text-4xl">1</div>
+              <div className="rounded-[1rem] border border-rose-200 bg-gradient-to-br from-rose-50 to-pink-100/60 p-3 sm:p-5">
+                <div className="font-serif text-3xl text-rose-700 sm:text-4xl">1</div>
                 <div className="mt-3 font-semibold text-stone-900 sm:mt-4">秩序</div>
                 <div className="mt-1 text-[12px] text-stone-500 sm:mt-2 sm:text-sm">规则先在</div>
               </div>
-              <div className="rounded-[1rem] border border-stone-200 bg-white p-3 sm:p-5">
-                <div className="font-serif text-3xl text-stone-900 sm:text-4xl">2</div>
+              <div className="rounded-[1rem] border border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-100/60 p-3 sm:p-5">
+                <div className="font-serif text-3xl text-amber-700 sm:text-4xl">2</div>
                 <div className="mt-3 font-semibold text-stone-900 sm:mt-4">冲突</div>
                 <div className="mt-1 text-[12px] text-stone-500 sm:mt-2 sm:text-sm">结构张力</div>
               </div>
-              <div className="rounded-[1rem] border border-stone-200 bg-white p-3 sm:p-5">
-                <div className="font-serif text-3xl text-stone-900 sm:text-4xl">3</div>
+              <div className="rounded-[1rem] border border-violet-200 bg-gradient-to-br from-violet-50 to-purple-100/60 p-3 sm:p-5">
+                <div className="font-serif text-3xl text-violet-700 sm:text-4xl">3</div>
                 <div className="mt-3 font-semibold text-stone-900 sm:mt-4">调和</div>
                 <div className="mt-1 text-[12px] text-stone-500 sm:mt-2 sm:text-sm">主体参与</div>
               </div>
-              <div className="rounded-[1rem] border border-stone-200 bg-white p-3 sm:p-5">
-                <div className="font-serif text-3xl text-stone-900 sm:text-4xl">4</div>
+              <div className="rounded-[1rem] border border-teal-200 bg-gradient-to-br from-teal-50 to-emerald-100/60 p-3 sm:p-5">
+                <div className="font-serif text-3xl text-teal-700 sm:text-4xl">4</div>
                 <div className="mt-3 font-semibold text-stone-900 sm:mt-4">虚无</div>
                 <div className="mt-1 text-[12px] text-stone-500 sm:mt-2 sm:text-sm">生成变化</div>
               </div>
@@ -827,9 +884,9 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
             </div>
           </div>
 
-          <div className="mt-4 h-3 overflow-hidden rounded-full bg-white/80 sm:mt-5">
+          <div className="mt-4 h-3 overflow-hidden rounded-full bg-stone-100/80 sm:mt-5">
             <div
-              className="h-full rounded-full bg-[linear-gradient(90deg,#0f766e,#c2410c)]"
+              className="h-full rounded-full bg-[linear-gradient(90deg,#f59e0b,#14b8a6_40%,#8b5cf6_75%,#f43f5e)]"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -888,7 +945,7 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
         </div>
 
         <div className="mt-6 grid gap-3 sm:mt-8">
-          {currentQuestion.options.map((option) => {
+          {shuffledOptions.map((option) => {
             const selected = answers[currentQuestion.id] === option.value;
 
             return (
@@ -896,17 +953,17 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
                 key={option.value}
                 type="button"
                 onClick={() => recordAnswer(currentQuestion.id, option.value)}
-                className={`rounded-[1.35rem] border px-4 py-4 text-left transition duration-200 sm:rounded-[1.65rem] sm:px-5 sm:py-[1.125rem] ${
+                className={`rounded-[1.35rem] border px-4 py-4 text-left transition duration-200 active:translate-y-0 sm:rounded-[1.65rem] sm:px-5 sm:py-[1.125rem] ${
                   selected
-                    ? `border-stone-900 bg-gradient-to-r ${optionToneMap[option.value]} scale-[1.01] shadow-[0_14px_34px_rgba(31,24,18,0.10)]`
-                    : "border-stone-200 bg-stone-50/80 text-stone-700 hover:-translate-y-0.5 hover:border-stone-400 hover:bg-white hover:shadow-[0_12px_26px_rgba(31,24,18,0.06)] active:translate-y-0"
+                    ? `border-transparent bg-gradient-to-r ${optionToneMap[option.value]} scale-[1.01] shadow-[0_14px_34px_rgba(31,24,18,0.12)]`
+                    : `hover:-translate-y-0.5 ${optionIdleMap[option.value]}`
                 }`}
               >
                 <div className="flex items-center gap-3 sm:gap-4">
                   <span
                     className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[11px] ${
                       selected
-                        ? "border-stone-900 bg-stone-900 text-white"
+                        ? optionDotMap[option.value]
                         : "border-stone-300 bg-white text-transparent"
                     }`}
                     aria-hidden="true"
