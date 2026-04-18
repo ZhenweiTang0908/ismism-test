@@ -222,24 +222,51 @@ const buildQuizResultPayload = ({
   };
 };
 
-const voteToDigit = (voteCounter: Record<ChoiceValue, number>): 1 | 2 | 3 | 4 => {
-  // 虚无(4)需要≥5票才能获胜
-  if (voteCounter["4"] >= 5) return 4;
-
-  // 平票优先级顺序: 2 > 3 > 4 > 1
-  const priorities: ChoiceValue[] = ["2", "3", "4", "1"];
-  let winner: ChoiceValue = priorities[0];
-  let maxVotes = voteCounter[winner];
-
-  for (let i = 1; i < priorities.length; i++) {
-    const candidate = priorities[i];
-    if (voteCounter[candidate] > maxVotes) {
-      winner = candidate;
-      maxVotes = voteCounter[candidate];
+const voteToDigit = (
+  voteCounter: Record<ChoiceValue, number>,
+  dimension: DimensionKey,
+): 1 | 2 | 3 | 4 => {
+  // 场域维度特殊规则：4需要≥5票且为最多票数才能获胜
+  if (dimension === "field") {
+    if (voteCounter["4"] >= 5) {
+      // 检查4是否是最高票数
+      const maxVotes = Math.max(voteCounter["1"], voteCounter["2"], voteCounter["3"], voteCounter["4"]);
+      if (voteCounter["4"] === maxVotes) {
+        return 4;
+      }
     }
-  }
+    // 场域维度：4不是最高票时，按平票优先级决定
+    // 优先级顺序: 2 > 3 > 4 > 1
+    const priorities: ChoiceValue[] = ["2", "3", "4", "1"];
+    let winner: ChoiceValue = priorities[0];
+    let maxVotes = voteCounter[winner];
 
-  return Number(winner) as 1 | 2 | 3 | 4;
+    for (let i = 1; i < priorities.length; i++) {
+      const candidate = priorities[i];
+      if (voteCounter[candidate] > maxVotes) {
+        winner = candidate;
+        maxVotes = voteCounter[candidate];
+      }
+    }
+
+    return Number(winner) as 1 | 2 | 3 | 4;
+  } else {
+    // 本体/现象维度：简单多数取胜
+    // 优先级顺序: 2 > 3 > 4 > 1
+    const priorities: ChoiceValue[] = ["2", "3", "4", "1"];
+    let winner: ChoiceValue = priorities[0];
+    let maxVotes = voteCounter[winner];
+
+    for (let i = 1; i < priorities.length; i++) {
+      const candidate = priorities[i];
+      if (voteCounter[candidate] > maxVotes) {
+        winner = candidate;
+        maxVotes = voteCounter[candidate];
+      }
+    }
+
+    return Number(winner) as 1 | 2 | 3 | 4;
+  }
 };
 
 const buildDimensionResult = (
@@ -256,15 +283,20 @@ const buildDimensionResult = (
   };
 
   for (const question of scoped) {
-    const choice = answers[question.id];
-    if (choice) {
-      voteCounter[choice] += 1;
+    const choices = answers[question.id];
+    if (choices && Array.isArray(choices)) {
+      for (const choice of choices) {
+        if (choice in voteCounter) {
+          voteCounter[choice] += 1;
+        }
+      }
     }
   }
 
-  const digit = voteToDigit(voteCounter);
+  const digit = voteToDigit(voteCounter, dimension);
   const winningVotes = voteCounter[String(digit) as ChoiceValue];
-  const maxScore = scoped.length;
+  // maxScore 是可能的最高票数（每题选2个 * 6题 = 12票）
+  const maxScore = scoped.length * 2;
   const percentage = maxScore === 0 ? 0 : round((winningVotes / maxScore) * 100);
   const copy = DIMENSION_TITLE_MAP[dimension][digit - 1];
 

@@ -23,7 +23,7 @@ export type QuestionType = keyof typeof QUESTION_TYPE_WEIGHTS;
 export const CHOICE_VALUES = ["1", "2", "3", "4"] as const;
 export type ChoiceValue = (typeof CHOICE_VALUES)[number];
 
-export type AnswerMap = Record<string, ChoiceValue>;
+export type AnswerMap = Record<string, ChoiceValue[]>;
 
 export type QuizOption = {
   value: ChoiceValue;

@@ -185,20 +185,21 @@ const validateQuestionBank = (questions: QuizQuestion[]) => {
 
   for (const dimension of DIMENSION_ORDER) {
     const scoped = questions.filter((item) => item.dimension === dimension);
-    if (scoped.length !== 5) {
+    const expectedCount = dimension === "field" ? 7 : 5;
+    if (scoped.length !== expectedCount) {
       throw new Error(
-        `Dimension "${dimension}" must contain 5 questions, got ${scoped.length}.`,
+        `Dimension "${dimension}" must contain ${expectedCount} questions, got ${scoped.length}.`,
       );
     }
 
     for (const type of Object.keys(
       QUESTION_TYPE_WEIGHTS,
     ) as QuestionType[]) {
-      const expectedCount = QUIZ_BLUEPRINT_COUNTS[dimension][type];
+      const expectedTypeCount = QUIZ_BLUEPRINT_COUNTS[dimension][type];
       const actualCount = scoped.filter((item) => item.type === type).length;
-      if (actualCount !== expectedCount) {
+      if (actualCount !== expectedTypeCount) {
         throw new Error(
-          `Dimension "${dimension}" type "${type}" must contain ${expectedCount} questions, got ${actualCount}.`,
+          `Dimension "${dimension}" type "${type}" must contain ${expectedTypeCount} questions, got ${actualCount}.`,
         );
       }
     }

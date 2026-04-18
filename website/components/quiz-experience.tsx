@@ -315,15 +315,30 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
       return;
     }
 
+    const currentChoices = answers[questionId] || [];
+    let nextChoices: ChoiceValue[];
+
+    if (currentChoices.includes(value)) {
+      // 如果已选中，则取消选择
+      nextChoices = currentChoices.filter((v) => v !== value);
+    } else if (currentChoices.length < 2) {
+      // 如果未选中且少于2个，则添加选择
+      nextChoices = [...currentChoices, value];
+    } else {
+      // 已选满2个，替换第一个（保持最多选2个）
+      nextChoices = [currentChoices[1], value];
+    }
+
     const nextAnswers = {
       ...answers,
-      [questionId]: value,
+      [questionId]: nextChoices,
     };
 
     setAnswers(nextAnswers);
     setError("");
 
-    if (currentIndex < questions.length - 1) {
+    if (currentIndex < questions.length - 1 && nextChoices.length === 2) {
+      // 选满2个后自动跳转到下一题
       window.setTimeout(() => {
         setCurrentIndex((index) => Math.min(index + 1, questions.length - 1));
       }, 120);
@@ -960,8 +975,8 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
             <h3 className="font-serif text-2xl font-semibold text-stone-950 sm:text-3xl">
               开始测试
             </h3>
-            <p className="mt-3 text-sm leading-7 text-stone-600">
-              昵称和留言都可留空，直接开始即可。
+            <p className="mt-3 text-sm leading-7 text-stone-800">
+              每道题最多可选 2 个答案
             </p>
 
             <div className="mt-6 grid gap-4">
@@ -1377,13 +1392,13 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
             {currentQuestion.question}
           </h2>
           <p className="mt-4 max-w-2xl text-sm leading-7 text-stone-600 sm:mt-5 sm:text-base">
-            请选择最贴近你真实想法的选项。这里没有标准答案，只看你平时更自然的判断倾向。
+            每道题最多可选 2 个答案
           </p>
         </div>
 
         <div className="mt-6 grid gap-3 sm:mt-8">
           {shuffledOptions.map((option) => {
-            const selected = answers[currentQuestion.id] === option.value;
+            const selected = (answers[currentQuestion.id] || []).includes(option.value);
 
             return (
               <button

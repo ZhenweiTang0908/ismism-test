@@ -58,23 +58,32 @@ const normalizeAnswers = (
 
   for (const [questionId, value] of Object.entries(source)) {
     const question = questionsById.get(questionId);
-    if (!question || typeof value !== "string") {
+    if (!question) {
       continue;
     }
 
-    const selected = value as ChoiceValue;
-    if (!VALID_CHOICES.has(selected)) {
+    // 支持多选：value 可以是数组或单个字符串
+    let selected: ChoiceValue[];
+    if (Array.isArray(value)) {
+      selected = (value as unknown[]).filter(
+        (v): v is ChoiceValue => typeof v === "string" && VALID_CHOICES.has(v as ChoiceValue),
+      );
+    } else if (typeof value === "string") {
+      selected = [value as ChoiceValue];
+    } else {
       continue;
     }
 
-    const validForQuestion = question.options.some(
-      (option) => option.value === selected,
+    // 过滤出对该题有效的选项
+    const validSelected = selected.filter((s) =>
+      question.options.some((option) => option.value === s),
     );
-    if (!validForQuestion) {
+
+    if (validSelected.length === 0) {
       continue;
     }
 
-    answers[questionId] = selected;
+    answers[questionId] = validSelected;
   }
 
   return answers;
@@ -82,9 +91,13 @@ const normalizeAnswers = (
 
 const getSelectedOptionLabel = (
   question: QuizQuestion,
-  selected: ChoiceValue,
-) =>
-  question.options.find((option) => option.value === selected)?.label ?? selected;
+  selected: ChoiceValue | ChoiceValue[],
+) => {
+  const selectedValues = Array.isArray(selected) ? selected : [selected];
+  return selectedValues
+    .map((v) => question.options.find((option) => option.value === v)?.label ?? v)
+    .join(", ");
+};
 
 const isMissingTableError = (message: string) =>
   message.includes("Could not find the table") ||
