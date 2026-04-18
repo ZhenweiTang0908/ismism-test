@@ -30,13 +30,13 @@ type RawQuestion = {
   options?: RawQuestionOption[];
 };
 
-const REQUIRED_TOTAL_QUESTIONS = 15;
+const REQUIRED_TOTAL_QUESTIONS = 17;
 
 const QUIZ_BLUEPRINT_COUNTS: Record<
   DimensionKey,
   Record<QuestionType, number>
 > = {
-  field: { life: 1, public: 2, abstract: 2 },
+  field: { life: 1, public: 3, abstract: 3 },
   ontology: { life: 1, public: 2, abstract: 2 },
   phenomenon: { life: 1, public: 2, abstract: 2 },
 };

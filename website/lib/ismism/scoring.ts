@@ -223,6 +223,9 @@ const buildQuizResultPayload = ({
 };
 
 const voteToDigit = (voteCounter: Record<ChoiceValue, number>): 1 | 2 | 3 | 4 => {
+  // 虚无(4)需要≥5票才能获胜
+  if (voteCounter["4"] >= 5) return 4;
+
   // 平票优先级顺序: 2 > 3 > 4 > 1
   const priorities: ChoiceValue[] = ["2", "3", "4", "1"];
   let winner: ChoiceValue = priorities[0];

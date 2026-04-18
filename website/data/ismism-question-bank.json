@@ -32,8 +32,8 @@
       { "value": "4", "label": "突破霸权很重要，没有什么尝试是真正的失败" }
     ]
   },
-  "04":{
-    "question": "关于自然规律的【本质】（例如牛顿力学），你的看法是：",
+  "04": {
+    "question": "关于自然规律的【本质】(例如太阳从东边升起)，你的看法是：",
     "dimension": "field",
     "type": "abstract",
     "options": [
@@ -44,7 +44,7 @@
     ]
   },
   "05": {
-    "question": "作为一个【普通人】，以下哪一种做法是你认为的“更优做法”？",
+    "question": "作为一个【普通人】，以下哪一种做法是你认为的\"更优做法\"？",
     "dimension": "field",
     "type": "abstract",
     "options": [
@@ -55,6 +55,28 @@
     ]
   },
   "06": {
+    "question": "作为一个【现代人】，你如何看待儒家文化？",
+    "dimension": "field",
+    "type": "public",
+    "options": [
+      { "value": "1", "label": "半部论语治天下" },
+      { "value": "2", "label": "结合我的现实需求来学习" },
+      { "value": "3", "label": "束缚人的自由的落后哲学" },
+      { "value": "4", "label": "必须彻底砸碎的旧秩序" }
+    ]
+  },
+  "07": {
+    "question": "关于【人】的死亡，你更赞同：",
+    "dimension": "field",
+    "type": "abstract",
+    "options": [
+      { "value": "1", "label": "死亡是人作为自然界生命的终结" },
+      { "value": "2", "label": "劳动人民之死是生命的解脱和升华" },
+      { "value": "3", "label": "死亡的确定性反过来逼问出活着的意义" },
+      { "value": "4", "label": "个体死亡的意义可以被未来重写" }
+    ]
+  },
+  "08": {
     "question": "你认为，哪种情况最能体现你的【自我】？",
     "dimension": "ontology",
     "type": "life",
@@ -65,8 +87,8 @@
       { "value": "4", "label": "没有自我这种东西，不同的情景有不同的自我" }
     ]
   },
-  "07": {
-    "question": "你认为“历史”的【本质】是什么？",
+  "09": {
+    "question": "你认为\"历史\"的【本质】是什么？",
     "dimension": "ontology",
     "type": "public",
     "options": [
@@ -76,7 +98,7 @@
       { "value": "4", "label": "任人打扮的小姑娘" }
     ]
   },
-  "08": {
+  "10": {
     "question": "谈教育公平时，你更关注：",
     "dimension": "ontology",
     "type": "public",
@@ -87,7 +109,7 @@
       { "value": "4", "label": "教育方式在现实中不断迭代的能力" }
     ]
   },
-  "09": {
+  "11": {
     "question": "你清楚地看到一头猪在天上飞，你会觉得：",
     "dimension": "ontology",
     "type": "abstract",
@@ -98,7 +120,7 @@
       { "value": "4", "label": "猪或许会飞，我们以前搞错了" }
     ]
   },
-  "10": {
+  "12": {
     "question": "以下哪句话最接近你对真实存在的判断？",
     "dimension": "ontology",
     "type": "abstract",
@@ -109,7 +131,7 @@
       { "value": "4", "label": "存在及其关系是一种持续生成的过程，最初什么都不是" }
     ]
   },
-  "11": {
+  "13": {
     "question": "面对一份家具的组装说明书，上面的步骤似乎【有问题】，你的第一反应是？",
     "dimension": "phenomenon",
     "type": "life",
@@ -120,7 +142,7 @@
       { "value": "4", "label": "先开始动手，边做边看" }
     ]
   },
-  "12": {
+  "14": {
     "question": "看到争议新闻，你会认为？",
     "dimension": "phenomenon",
     "type": "public",
@@ -131,7 +153,7 @@
       { "value": "4", "label": "我无法看到事件真相，但如果我遇到类似情况，我就知道解决方法了" }
     ]
   },
-  "13": {
+  "15": {
     "question": "看到争议新闻，你更容易从哪里发现【问题】？",
     "dimension": "phenomenon",
     "type": "public",
@@ -142,7 +164,7 @@
       { "value": "4", "label": "先看新闻报导中的矛盾" }
     ]
   },
-  "14": {
+  "16": {
     "question": "恋爱中的【滤镜】，你觉得是？",
     "dimension": "phenomenon",
     "type": "abstract",
@@ -153,7 +175,7 @@
       { "value": "4", "label": "因为我爱ta，ta才闪闪发光" }
     ]
   },
-  "15": {
+  "17": {
     "question": "你和朋友对同一件事理解完全不同，你第一反应是：",
     "dimension": "phenomenon",
     "type": "abstract",
