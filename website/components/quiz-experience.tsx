@@ -1443,14 +1443,25 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
           >
             上一题
           </button>
-          <button
-            type="button"
-            onClick={submitQuiz}
-            disabled={!allAnswered || isSubmitting}
-            className="w-full rounded-full bg-stone-950 px-5 py-3 text-sm font-medium text-stone-50 transition duration-200 hover:-translate-y-0.5 hover:bg-stone-800 hover:shadow-[0_10px_24px_rgba(28,25,23,0.18)] active:translate-y-0 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:text-stone-100 disabled:shadow-none sm:w-auto"
-          >
-            {isSubmitting ? "正在生成结果..." : "提交结果"}
-          </button>
+          {currentIndex < questions.length - 1 ? (
+            <button
+              type="button"
+              onClick={() => setCurrentIndex((index) => Math.min(index + 1, questions.length - 1))}
+              disabled={isSubmitting}
+              className="w-full rounded-full border border-teal-300 bg-gradient-to-r from-teal-50 to-emerald-50 px-5 py-3 text-sm font-medium text-teal-800 transition duration-200 hover:-translate-y-0.5 hover:border-teal-400 hover:from-teal-100 hover:to-emerald-100 hover:shadow-[0_10px_24px_rgba(15,118,110,0.14)] active:translate-y-0 sm:w-auto"
+            >
+              下一题
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={submitQuiz}
+              disabled={!allAnswered || isSubmitting}
+              className="w-full rounded-full bg-stone-950 px-5 py-3 text-sm font-medium text-stone-50 transition duration-200 hover:-translate-y-0.5 hover:bg-stone-800 hover:shadow-[0_10px_24px_rgba(28,25,23,0.18)] active:translate-y-0 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:text-stone-100 disabled:shadow-none sm:w-auto"
+            >
+              {isSubmitting ? "正在生成结果..." : "提交结果"}
+            </button>
+          )}
         </div>
       </div>
     </section>
