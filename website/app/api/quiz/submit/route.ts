@@ -133,6 +133,7 @@ export async function POST(request: Request) {
     const payload = (await request.json()) as {
       answers?: unknown;
       respondent?: unknown;
+      clientData?: unknown;
     };
 
     const [questions, enhancedCatalog] = await Promise.all([
@@ -179,6 +180,14 @@ export async function POST(request: Request) {
         core_code: result.coreCode,
         user_agent: request.headers.get("user-agent"),
         question_count: questions.length,
+        ip: request.headers.get("x-forwarded-for")?.split(',')[0] || request.headers.get("x-real-ip"),
+        country: request.headers.get("x-vercel-ip-country"),
+        country_region: request.headers.get("x-vercel-ip-country-region"),
+        city: request.headers.get("x-vercel-ip-city"),
+        timezone: request.headers.get("x-vercel-ip-timezone"),
+        language: request.headers.get("accept-language"),
+        referer: request.headers.get("referer"),
+        client_data: payload.clientData,
       }),
     };
 

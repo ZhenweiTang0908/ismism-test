@@ -155,6 +155,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
   const [isIsmDetailOpen, setIsIsmDetailOpen] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [shareError, setShareError] = useState("");
+  const [startTime] = useState(Date.now());
 
   const currentQuestion = questions[currentIndex];
   const currentQuestionNumber = currentIndex + 1;
@@ -287,6 +288,18 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
         body: JSON.stringify({
           answers,
           respondent: profile,
+          clientData: {
+            screenWidth: window.screen.width,
+            screenHeight: window.screen.height,
+            timeSpentMs: Date.now() - startTime,
+            language: navigator.language,
+            platform: navigator.platform,
+            timezoneOffset: new Date().getTimezoneOffset(),
+            colorDepth: window.screen.colorDepth,
+            deviceMemory: (navigator as any).deviceMemory,
+            hardwareConcurrency: navigator.hardwareConcurrency,
+            touchSupport: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
+          }
         }),
       });
 
