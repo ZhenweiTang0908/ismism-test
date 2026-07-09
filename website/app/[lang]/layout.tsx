@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Noto_Sans_SC, Noto_Serif_SC } from "next/font/google";
-import "./globals.css";
+import "../globals.css";
 
 const bodyFont = Noto_Sans_SC({
   variable: "--font-body",
