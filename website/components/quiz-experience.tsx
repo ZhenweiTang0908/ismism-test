@@ -1,6 +1,8 @@
 "use client";
 
 import { startTransition, useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Typewriter } from "./typewriter";
 
 import type {
   AnswerMap,
@@ -467,10 +469,22 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
   }, [phase, response?.result]);
 
   if (phase === "result" && response) {
+    const fieldDigit = response.result.dimensionResults.find((r) => r.key === "field")?.digit;
+    const getTendencyGradient = (digit?: number) => {
+      switch (digit) {
+        case 1: return "from-rose-100/60 via-white/70 to-pink-100/60";
+        case 2: return "from-amber-100/60 via-white/70 to-orange-100/60";
+        case 3: return "from-violet-100/60 via-white/70 to-purple-100/60";
+        case 4: return "from-teal-100/60 via-white/70 to-emerald-100/60";
+        default: return "from-stone-100/60 via-white/70 to-stone-100/60";
+      }
+    };
+    const bgGradient = getTendencyGradient(fieldDigit);
+
     return (
-      <>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
         <section className="grid w-full gap-4 sm:gap-5">
-        <article className="overflow-hidden rounded-[1.6rem] border border-stone-200/70 bg-[linear-gradient(135deg,rgba(255,252,248,0.98),rgba(255,247,237,0.92)_42%,rgba(240,253,250,0.88))] p-5 shadow-[0_24px_72px_rgba(31,24,18,0.08)] sm:rounded-[2rem] sm:p-7">
+        <article className={`overflow-hidden rounded-[1.6rem] border border-white/50 bg-gradient-to-br ${bgGradient} backdrop-blur-2xl p-5 shadow-[0_24px_72px_rgba(31,24,18,0.08)] sm:rounded-[2rem] sm:p-7`}>
           <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-stone-500">测试结果</p>
@@ -635,13 +649,15 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                 <p className="text-base font-semibold text-stone-900">{lang === 'en' ? 'Simple Explanation' : '通俗解释'}</p>
                 <div className="mt-2 text-[15px] leading-8 text-stone-700">
                   {aiInterpretation.simpleExplanation.split('\n').map((paragraph, index) => (
-                    <p key={index} className="mb-2 last:mb-0">{paragraph}</p>
+                    <div key={index} className="mb-2 last:mb-0">
+                      <Typewriter text={paragraph} delay={index * 0.8} speed={0.03} />
+                    </div>
                   ))}
                 </div>
               </article>
 
               <div className="grid gap-3 md:grid-cols-3">
-                {aiInterpretation.dimensionInterpretations.map((item) => (
+                {aiInterpretation.dimensionInterpretations.map((item, index) => (
                   <article
                     key={item.key}
                     className={`rounded-[1.4rem] border p-6 shadow-sm ${dimensionToneMap[item.key].panel}`}
@@ -654,9 +670,9 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                         {item.marker || "分析中..."}
                       </span>
                     </div>
-                    <p className="text-[15px] leading-8 text-stone-700">
-                      {item.explanation}
-                    </p>
+                    <div className="text-[15px] leading-8 text-stone-700 min-h-[4rem]">
+                      <Typewriter text={item.explanation} delay={2.5 + index * 1.5} speed={0.03} />
+                    </div>
                   </article>
                 ))}
               </div>
@@ -964,7 +980,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
           </div>
         </div>
       )}
-      </>
+      </motion.div>
     );
   }
 
@@ -1388,50 +1404,60 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
           </span>
         </div>
 
-        <div>
-          <h2 className="mt-5 text-balance font-serif text-2xl leading-tight text-stone-950 sm:text-3xl lg:text-[2.55rem]">
-            {currentQuestion.question}
-          </h2>
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-stone-600 sm:mt-5 sm:text-base">
-            每道题最多可选 2 个答案
-          </p>
-        </div>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentIndex}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.25 }}
+          >
+            <div>
+              <h2 className="mt-5 text-balance font-serif text-2xl leading-tight text-stone-950 sm:text-3xl lg:text-[2.55rem]">
+                {currentQuestion.question}
+              </h2>
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-stone-600 sm:mt-5 sm:text-base">
+                每道题最多可选 2 个答案
+              </p>
+            </div>
 
-        <div className="mt-6 grid gap-3 sm:mt-8">
-          {shuffledOptions.map((option) => {
-            const selected = (answers[currentQuestion.id] || []).includes(option.value);
+            <div className="mt-6 grid gap-3 sm:mt-8">
+              {shuffledOptions.map((option) => {
+                const selected = (answers[currentQuestion.id] || []).includes(option.value);
 
-            return (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => recordAnswer(currentQuestion.id, option.value)}
-                className={`rounded-[1.35rem] border px-4 py-4 text-left transition duration-200 active:translate-y-0 sm:rounded-[1.65rem] sm:px-5 sm:py-[1.125rem] ${
-                  selected
-                    ? "border-teal-400 bg-gradient-to-r from-teal-100 to-emerald-200 text-teal-950 scale-[1.01] shadow-[0_14px_34px_rgba(15,118,110,0.18)]"
-                    : `hover:-translate-y-0.5 ${optionIdleMap[option.value]}`
-                }`}
-              >
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <span
-                    className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[11px] ${
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => recordAnswer(currentQuestion.id, option.value)}
+                    className={`rounded-[1.35rem] border px-4 py-4 text-left transition duration-200 active:translate-y-0 sm:rounded-[1.65rem] sm:px-5 sm:py-[1.125rem] ${
                       selected
-                        ? "border-teal-600 bg-teal-600 text-white"
-                        : "border-stone-300 bg-white text-transparent"
+                        ? "border-teal-400 bg-gradient-to-r from-teal-100 to-emerald-200 text-teal-950 scale-[1.01] shadow-[0_14px_34px_rgba(15,118,110,0.18)]"
+                        : `hover:-translate-y-0.5 ${optionIdleMap[option.value]}`
                     }`}
-                    aria-hidden="true"
                   >
-                    ✓
-                  </span>
+                    <div className="flex items-center gap-3 sm:gap-4">
+                      <span
+                        className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[11px] ${
+                          selected
+                            ? "border-teal-600 bg-teal-600 text-white"
+                            : "border-stone-300 bg-white text-transparent"
+                        }`}
+                        aria-hidden="true"
+                      >
+                        ✓
+                      </span>
 
-                  <div className="min-w-0 flex-1">
-                    <span className="text-sm font-medium sm:text-base">{option.label}</span>
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
+                      <div className="min-w-0 flex-1">
+                        <span className="text-sm font-medium sm:text-base">{option.label}</span>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </motion.div>
+        </AnimatePresence>
 
         {error ? <p className="mt-5 text-sm text-red-600">{error}</p> : null}
 
