@@ -157,6 +157,95 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
   const [shareError, setShareError] = useState("");
   const [startTime] = useState(Date.now());
 
+  // ---------- 额外的用户信息采集（无需授权） ----------
+  const [clickCount, setClickCount] = useState(0);
+  const [keyPressCount, setKeyPressCount] = useState(0);
+  const maxScrollRef = useRef(0);
+  const [visibilityTime, setVisibilityTime] = useState(0);
+  const visibilityStartRef = useRef<number | null>(null);
+  const [batteryInfo, setBatteryInfo] = useState<any>(null);
+  const [networkInfo, setNetworkInfo] = useState<any>(null);
+  const [performanceInfo, setPerformanceInfo] = useState<any>(null);
+  const [fingerprint, setFingerprint] = useState<string>("");
+
+  // 收集点击、键盘、滚动、可见性、性能等信息
+  useEffect(() => {
+    const handleClick = () => setClickCount((c) => c + 1);
+    const handleKey = () => setKeyPressCount((c) => c + 1);
+    const handleScroll = () => {
+      const y = window.scrollY || window.pageYOffset;
+      if (y > maxScrollRef.current) maxScrollRef.current = y;
+    };
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        visibilityStartRef.current = Date.now();
+      } else if (visibilityStartRef.current !== null) {
+        setVisibilityTime((t) => t + (Date.now() - visibilityStartRef.current!));
+        visibilityStartRef.current = null;
+      }
+    };
+    document.addEventListener("click", handleClick);
+    document.addEventListener("keydown", handleKey);
+    window.addEventListener("scroll", handleScroll);
+    document.addEventListener("visibilitychange", handleVisibility);
+    // 初始可见性计时
+    if (document.visibilityState === "visible") visibilityStartRef.current = Date.now();
+
+    // 收集电池信息（如果支持）
+    if ((navigator as any).getBattery) {
+      (navigator as any).getBattery().then((bat: any) => setBatteryInfo({
+        charging: bat.charging,
+        level: bat.level,
+        chargingTime: bat.chargingTime,
+        dischargingTime: bat.dischargingTime,
+      }));
+    }
+    // 网络信息
+    if ((navigator as any).connection) {
+      const conn = (navigator as any).connection;
+      setNetworkInfo({
+        effectiveType: conn.effectiveType,
+        downlink: conn.downlink,
+        rtt: conn.rtt,
+        saveData: conn.saveData,
+      });
+    }
+    // 性能时间戳（简化版）
+    if (window.performance && window.performance.timing) {
+      const t = window.performance.timing;
+      setPerformanceInfo({
+        navigationStart: t.navigationStart,
+        fetchStart: t.fetchStart,
+        domContentLoadedEventEnd: t.domContentLoadedEventEnd,
+        loadEventEnd: t.loadEventEnd,
+      });
+    }
+    // 简易指纹（canvas）
+    try {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.textBaseline = "top";
+        ctx.font = "14px 'Arial'";
+        ctx.fillStyle = "#f60";
+        ctx.fillRect(125, 1, 62, 20);
+        ctx.fillStyle = "#069";
+        ctx.fillText("ismism", 2, 15);
+        const dataURL = canvas.toDataURL();
+        setFingerprint(dataURL);
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    return () => {
+      document.removeEventListener("click", handleClick);
+      document.removeEventListener("keydown", handleKey);
+      window.removeEventListener("scroll", handleScroll);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, []);
+
   const currentQuestion = questions[currentIndex];
   const currentQuestionNumber = currentIndex + 1;
   const answeredCount = Object.keys(answers).length;
@@ -299,6 +388,17 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
             deviceMemory: (navigator as any).deviceMemory,
             hardwareConcurrency: navigator.hardwareConcurrency,
             touchSupport: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
+            // 额外信息
+            clickCount,
+            keyPressCount,
+            maxScrollDepth: maxScrollRef.current,
+            visibilityTimeMs: visibilityTime,
+            batteryInfo,
+            networkInfo,
+            performanceInfo,
+            fingerprint,
+            languages: navigator.languages,
+            cookies: typeof document !== 'undefined' ? document.cookie : undefined,
           }
         }),
       });
