@@ -1,0 +1,393 @@
+{
+  "01": {
+    "question": "**Translation:**\n\nWhat makes a team a good team?\n\n---\n\n*Alternative translations depending on context:*\n\n- What kind of team is a good team?\n- What defines a good team?",
+    "dimension": "field",
+    "type": "life",
+    "options": [
+      {
+        "value": "1",
+        "label": "\"No one has ever made a mistake, and I only need to play my role well.\""
+      },
+      {
+        "value": "2",
+        "label": "Here is a natural, fluent English translation:\n\n**\"a team led by a top-level leader\"**\n\nor alternatively:\n\n**\"a team with an exceptional leader at the helm\"**\n\nThis phrase describes a team that has a highly capable or supreme leader guiding it. The translation maintains the philosophical/ideological tone appropriate to the context."
+      },
+      {
+        "value": "3",
+        "label": "Here is the translation:\n\n**Every individual has the ability to influence the entire team.**\n\nThis statement reflects a philosophical perspective on individual agency within a collective context, emphasizing that even a single person can have a significant impact on the whole group."
+      },
+      {
+        "value": "4",
+        "label": "A team that certainly has its problems, but where everyone is willing to engage in self-reflection."
+      }
+    ]
+  },
+  "02": {
+    "question": "In tackling traffic congestion in a city, which of the following do you believe would be the optimal starting point:",
+    "dimension": "field",
+    "type": "public",
+    "options": [
+      {
+        "value": "1",
+        "label": "Here is a natural English translation:\n\n**\"Established theory is most important; one should act entirely according to expert opinion.\"**\n\nThis expresses a position that prioritizes existing theoretical frameworks and defers fully to authoritative expertise."
+      },
+      {
+        "value": "2",
+        "label": "Here is a natural English translation:\n\n\"Have the construction company and experts discuss [the matter] to reach a unified solution.\"\n\nOr alternatively:\n\n\"Let the construction company and experts discuss and arrive at a consensus solution.\""
+      },
+      {
+        "value": "3",
+        "label": "Here is a natural English translation:\n\n\"Bring citizens into the process as well, and have everyone discuss together to finalize the plan.\"\n\nAlternatively, depending on context:\n\n\"Get citizens involved too, and have everyone discuss together to settle on a plan.\""
+      },
+      {
+        "value": "4",
+        "label": "**\"First, conduct a small-scale pilot, then discuss and make adjustments with everyone.\"**\n\nAlternative renderings:\n\n- \"First, run a small-scale trial, then discuss and refine it with the group.\"\n- \"First, test it on a small scope, then discuss and adjust with everyone.\""
+      }
+    ]
+  },
+  "03": {
+    "question": "**How do you feel about [Your Country]'s goal to overtake the US in AI within one year?**",
+    "dimension": "field",
+    "type": "public",
+    "options": [
+      {
+        "value": "1",
+        "label": "**Translation:**\n\n\"Because the United States is so powerful, it is absolutely impossible...\"\n\n**Note:** This appears to be an incomplete answer option, as \"绝无可能\" (absolutely impossible) is left without an object—it implies the sentence was leading into a statement about something being impossible due to America's power."
+      },
+      {
+        "value": "2",
+        "label": "Here are a few natural English translations:\n\n1. \"This is merely a contest between grand forces, and it has no importance to me.\"\n\n2. \"This is just a game of powerful forces, and it doesn't matter to me at all.\"\n\n3. \"This is simply a struggle among great powers, and I couldn't care less about it.\"\n\nAll of these capture the original meaning: the speaker is dismissing some conflict or rivalry among powerful entities as irrelevant to their own concerns."
+      },
+      {
+        "value": "3",
+        "label": "Could overly radical strategies lead to the oppression of individuals?"
+      },
+      {
+        "value": "4",
+        "label": "Breaking hegemony is important, and no attempt is a true failure."
+      }
+    ]
+  },
+  "04": {
+    "question": "What is your view on the nature of natural laws (for example, that the sun rises in the east)?",
+    "dimension": "field",
+    "type": "abstract",
+    "options": [
+      {
+        "value": "1",
+        "label": "**Translation:**\n\n\"Natural laws are the essence of the world—we need only discover and apply them.\"\n\n---\n\n*Alternative phrasings (depending on context):*\n\n- \"Natural laws constitute the fundamental nature of the world, and our task is simply to discover and harness them.\"\n\n- \"The natural order is the essence of reality; we need only uncover it and put it to use.\"\n\n---\n\n*Note:* This statement reflects a naturalistic or positivist philosophical stance, emphasizing that the world operates according to discoverable laws rather than requiring metaphysical or supernatural explanations."
+      },
+      {
+        "value": "2",
+        "label": "Here are a few natural English translations:\n\n1. **\"There is a higher power that governs these laws.\"**\n\n2. **\"These laws are governed by a higher force behind the scenes.\"**\n\n3. **\"A higher power exists that controls these laws from behind.\"**\n\nThe first option is the most straightforward and fluent. The second option preserves the sense of something operating \"behind the scenes\" or subtly in the background, which seems to be implied by \"在背后.\""
+      },
+      {
+        "value": "3",
+        "label": "Here is the translation:\n\n**Natural laws are merely subjective human understanding, and the actual world may not necessarily be this way.**\n\n---\n\n*Alternative/philosophically nuanced version:*\n\n\"What we call natural laws are merely products of human subjective cognition—the real world may not necessarily conform to our understanding of it.\""
+      },
+      {
+        "value": "4",
+        "label": "Natural laws are experiences that are universally acknowledged, but they may also be broken in the future."
+      }
+    ]
+  },
+  "05": {
+    "question": "Here is the translation:\n\n\"As an [ordinary person], which of the following approaches do you consider to be the 'better choice'?\"",
+    "dimension": "field",
+    "type": "abstract",
+    "options": [
+      {
+        "value": "1",
+        "label": "**Translation:**\n\n\"To swiftly overthrow the bourgeoisie and establish a society in which the proletariat holds complete dominance.\"\n\n---\n\n*Note: This statement reflects classic Marxist-Leninist ideology, expressing the revolutionary aim of replacing capitalist rule with proletarian (working-class) governance.*"
+      },
+      {
+        "value": "2",
+        "label": "Since real-world struggle is too brutal, online attacks against the bourgeoisie have become the key tactic for the time being."
+      },
+      {
+        "value": "3",
+        "label": "\"Become a capitalist, accumulate capital, and only then have the strength to overthrow the bourgeoisie.\""
+      },
+      {
+        "value": "4",
+        "label": "While fulfilling one's practical responsibilities, helping and supporting fellow workers is a key means."
+      }
+    ]
+  },
+  "06": {
+    "question": "How do you, as a [modern person], view Confucian culture?",
+    "dimension": "field",
+    "type": "public",
+    "options": [
+      {
+        "value": "1",
+        "label": "\"Half the *Analects* is enough to rule the empire.\"\n\nThis is a famous Chinese proverb attributed to Zhao Pu, a Song Dynasty official, suggesting that thorough mastery of just half of Confucius's *Analects* provides sufficient wisdom to govern a nation."
+      },
+      {
+        "value": "2",
+        "label": "Here are a few natural English translations:\n\n1. **\"Learn in accordance with my practical needs\"**\n\n2. **\"Study in light of my actual needs\"**\n\n3. **\"Integrate my learning with my real-world needs\"**\n\nThe most concise and idiomatic option would be **\"Learn in accordance with my practical needs.\"**\n\nThis expresses a learning approach that emphasizes connecting theoretical knowledge or study to one's concrete, real-life requirements."
+      },
+      {
+        "value": "3",
+        "label": "**Translation:**\n\n\"A backward philosophy that enslaves human freedom\"\n\n---\n\n*Alternative fluent options:*\n\n- \"An outdated philosophy that shackles human liberty\"\n- \"A retrograde philosophy that constrains human freedom\""
+      },
+      {
+        "value": "4",
+        "label": "**The old order must be completely shattered.**\n\nThis translation captures the revolutionary ideological tone of the original Chinese, which uses the emphatic language of total rupture and destruction associated with revolutionary discourse."
+      }
+    ]
+  },
+  "07": {
+    "question": "**Regarding human death, which perspective do you agree with more:**",
+    "dimension": "field",
+    "type": "abstract",
+    "options": [
+      {
+        "value": "1",
+        "label": "**Death is the end of human life within the natural world.**"
+      },
+      {
+        "value": "2",
+        "label": "\"The death of the working people is the liberation and transcendence of life.\""
+      },
+      {
+        "value": "3",
+        "label": "The certainty of death, in turn, compels us to confront the meaning of life."
+      },
+      {
+        "value": "4",
+        "label": "The meaning of individual death can be rewritten by the future."
+      }
+    ]
+  },
+  "08": {
+    "question": "**Which situation do you think best reflects your sense of self?**\n\nOr alternatively:\n\n**In which situation do you feel your \"self\" is most clearly expressed?**\n\n---\n\n*Note: This appears to be a personality assessment or philosophical questionnaire asking you to select from multiple scenarios (not shown here) that best demonstrate your personal identity, individuality, or self-concept.*",
+    "dimension": "ontology",
+    "type": "life",
+    "options": [
+      {
+        "value": "1",
+        "label": "When one becomes a person who is admired/esteemed by the shared values of society"
+      },
+      {
+        "value": "2",
+        "label": "Here is the translation:\n\n**\"when resisting the common values of society\"**\n\nor alternatively:\n\n**\"when opposing society's shared values\"**\n\nThis phrase describes the situation or context in which one rebels against or opposes the prevailing or collective value system of society."
+      },
+      {
+        "value": "3",
+        "label": "Here are some natural English translations:\n\n1. **\"When happy\"** (most direct)\n2. **\"When one is happy\"** (more formal)\n3. **\"In times of happiness\"** (slightly more literary/philosophical)\n\nGiven that this is an answer option related to philosophical concepts, **\"When happy\"** or **\"In times of happiness\"** would be the most appropriate choices."
+      },
+      {
+        "value": "4",
+        "label": "Here is the translation:\n\n**\"There is no such thing as a fixed self—different contexts give rise to different selves.\"**\n\nThis translation captures the philosophical meaning of the original text, which expresses the view that the self is not a unified, permanent entity but rather shifts and changes depending on the situation or context one finds oneself in."
+      }
+    ]
+  },
+  "09": {
+    "question": "What do you think is the essence of \"history\"?",
+    "dimension": "ontology",
+    "type": "public",
+    "options": [
+      {
+        "value": "1",
+        "label": "**Translation:**\n\na regular process of change\n\n---\n\n*Alternative options depending on context:*\n\n- a systematic process of succession\n- a predictable pattern of transformation\n- an orderly process of alternation"
+      },
+      {
+        "value": "2",
+        "label": "Here is a natural, fluent English translation:\n\n**\"A blood-soaked history of power transitions\"**\n\nOr alternatively:\n\n**\"The bloody history of power succession\"**\n\nBoth convey the philosophical observation that throughout history, changes in political power have often been accompanied by violence and bloodshed."
+      },
+      {
+        "value": "3",
+        "label": "**Narratives constructed by eminent figures**\n\nor alternatively:\n\n**Narratives woven by distinguished individuals**"
+      },
+      {
+        "value": "4",
+        "label": "**Translation:**\n\n\"a little girl anyone can dress up\" (i.e., a figure or narrative that can be reinterpreted/manipulated to serve any purpose)\n\n---\n\n*Note: This is a metaphorical expression in Chinese internet discourse, used to criticize how certain historical figures, events, or concepts can be reshaped and reinterpreted by different parties to suit various agendas.*"
+      }
+    ]
+  },
+  "10": {
+    "question": "\"When discussing educational equity, you focus more on:\"",
+    "dimension": "ontology",
+    "type": "public",
+    "options": [
+      {
+        "value": "1",
+        "label": "**Uniform application of rules**"
+      },
+      {
+        "value": "2",
+        "label": "**Translation:**\n\n\"The differences between schools of different social classes\"\n\nOr alternatively:\n\n\"Educational disparities among different social strata\"\n\nBoth renderings capture the philosophical and ideological dimension of social stratification in education."
+      },
+      {
+        "value": "3",
+        "label": "Whether students enjoy the learning process"
+      },
+      {
+        "value": "4",
+        "label": "Here are a few natural English translations:\n\n1. **\"The ability of educational methods to continuously evolve in practice\"**\n\n2. **\"The capacity of educational approaches to constantly improve in reality\"**\n\n3. **\"The ongoing iterative capability of educational methods in real-world settings\"**\n\nThe first option is the most fluent and natural-sounding for philosophical/educational discourse. It conveys the idea that educational approaches have the capacity to continuously adapt and improve within actual practical contexts."
+      }
+    ]
+  },
+  "11": {
+    "question": "**Translation:**\n\n\"When you clearly see a pig flying in the sky, you would think:\"\n\n---\n\nThis is a classic Chinese personality test question. It typically presents an impossible or absurd scenario to gauge how people respond—whether they lean toward logical explanations (hallucination, dreaming, special effects), creative/fantasy interpretations (magic, supernatural), or something else entirely.",
+    "dimension": "ontology",
+    "type": "abstract",
+    "options": [
+      {
+        "value": "1",
+        "label": "This breed of pig is naturally capable of flying."
+      },
+      {
+        "value": "2",
+        "label": "This is not a pig; it is some other animal."
+      },
+      {
+        "value": "3",
+        "label": "Here is a natural, fluent English translation:\n\n\"I may have misread it, or I could have food poisoning.\"\n\nAlternatively, for a slightly more casual tone:\n\n\"Maybe I misread it, or maybe I have food poisoning.\""
+      },
+      {
+        "value": "4",
+        "label": "Perhaps pigs can fly; we were mistaken before."
+      }
+    ]
+  },
+  "12": {
+    "question": "Here is the translation:\n\n**Which of the following statements most closely aligns with your view of real existence?**\n\nThis is a philosophy test question asking the respondent to choose which statement best reflects their understanding or belief about what truly exists.",
+    "dimension": "ontology",
+    "type": "abstract",
+    "options": [
+      {
+        "value": "1",
+        "label": "**Translation:**\n\n\"What exists is that which can be measured and repeatedly verified.\"\n\n*Alternative (slightly more natural):* \"Only what can be measured and repeatedly verified can be said to exist.\"\n\n---\n\nThis statement reflects a positivist or empiricist epistemological position—asserting that genuine knowledge or existence is limited to what can be empirically verified."
+      },
+      {
+        "value": "2",
+        "label": "**What truly matters is the relationship between beings, rather than beings in isolation.**"
+      },
+      {
+        "value": "3",
+        "label": "**Translation:**\n\n\"Existence depends on the gaze of consciousness; things that no one attends to have little significance.\"\n\n---\n\n*Alternative phrasings:*\n\n- \"Existence relies on conscious attention; what remains unwitnessed holds little meaning.\"\n- \"That which exists depends on being perceived by consciousness; what nobody pays attention to carries little significance.\"\n\n*(This expresses a phenomenological or idealist notion—similar to Berkeley's \"esse est percipi\"—that meaning and existence are tied to conscious awareness.)*"
+      },
+      {
+        "value": "4",
+        "label": "**Translation:**\n\nExistence and its relations constitute a process of continuous becoming; initially, it is nothing.\n\n---\n\n*Note: This statement appears to express a process-oriented view of being, suggesting that existence is not static but rather unfolds through ongoing transformation—emerging from an initial state of nothingness. This resonates with certain existentialist and process philosophical traditions.*"
+      }
+    ]
+  },
+  "13": {
+    "question": "When you come across what appears to be errors in a furniture assembly manual, what is your first reaction?",
+    "dimension": "phenomenon",
+    "type": "life",
+    "options": [
+      {
+        "value": "1",
+        "label": "Here is a natural English translation:\n\n**\"Follow the steps, and success is inevitable.\"**\n\nAlternatively, depending on context:\n\n- \"Proceed step by step, and you will surely succeed.\"\n- \"If you follow the proper steps, success is guaranteed.\"\n\nThe core meaning is that methodical, step-by-step progress necessarily leads to success—a principle emphasizing disciplined process over chance."
+      },
+      {
+        "value": "2",
+        "label": "Here are several natural English translations:\n\n1. \"The problem lies entirely with the creator.\"\n2. \"It is completely the creator's fault.\"\n3. \"The fault rests solely with the maker.\"\n4. \"The creator is entirely to blame.\"\n\nThe most neutral and philosophical-sounding option would be **\"The problem lies entirely with the creator.\"**"
+      },
+      {
+        "value": "3",
+        "label": "Here is a natural English translation:\n\n**\"My understanding differs from that of the creator.\"**\n\nOr alternatively:\n\n- \"My interpretation differs from the creator's.\"\n- \"There is a deviation between my understanding and the creator's.\"\n\nThis appears to be a response indicating that the respondent's interpretation or comprehension of something (likely a text, work, or concept) does not align with what the original creator intended."
+      },
+      {
+        "value": "4",
+        "label": "Here is a natural English translation:\n\n**\"Start by taking action, then learn as you go.\"**\n\nThis reflects a pragmatic, experimental approach—advocating for beginning rather than overthinking, and adapting based on observation and experience."
+      }
+    ]
+  },
+  "14": {
+    "question": "When you see controversial news, what do you think?",
+    "dimension": "phenomenon",
+    "type": "public",
+    "options": [
+      {
+        "value": "1",
+        "label": "Here is the translation:\n\n\"Although the matter is complex, examining it from multiple perspectives will reveal the truth.\"\n\nOr alternatively:\n\n\"Though things can be complicated, looking at them from different angles will help you see the truth.\""
+      },
+      {
+        "value": "2",
+        "label": "There always seems to be some hidden force at work behind the scenes."
+      },
+      {
+        "value": "3",
+        "label": "**Different perspectives reveal different truths.**"
+      },
+      {
+        "value": "4",
+        "label": "Although the truth remains unknown, what matters is that I know how the surface-level problem was resolved."
+      }
+    ]
+  },
+  "15": {
+    "question": "\"When you come across controversial news, where are you most likely to identify the problem?\"",
+    "dimension": "phenomenon",
+    "type": "public",
+    "options": [
+      {
+        "value": "1",
+        "label": "**First, consult the official announcement.**"
+      },
+      {
+        "value": "2",
+        "label": "**First, examine the verifiable facts.**\n\nOr alternatively:\n\n**First, look at the confirmed verifiable facts.**"
+      },
+      {
+        "value": "3",
+        "label": "Here are a few natural English renderings:\n\n- \"Based on my past experience...\"\n- \"Judging from my past experience...\"\n- \"From my past experience...\"\n\nThe most fluent option would be **\"Based on my past experience...\"** — this reads naturally in English and fits well as an opening phrase for an answer option, typically followed by a conclusion or judgment."
+      },
+      {
+        "value": "4",
+        "label": "**First, examine the contradictions in the news reports.**"
+      }
+    ]
+  },
+  "16": {
+    "question": "**In a romantic relationship, what would you say \"the filter\" is?**\n\nThis appears to be a personality/philosophy test question about the psychological phenomenon of idealization in love—where people tend to see their partner through a \"rose-colored\" or idealized lens, often overlooking flaws or projecting positive qualities onto them.",
+    "dimension": "phenomenon",
+    "type": "abstract",
+    "options": [
+      {
+        "value": "1",
+        "label": "**The normal biological response of dopamine in the brain**\n\n(Or more concisely: *Normal brain dopamine response*)"
+      },
+      {
+        "value": "2",
+        "label": "Here is a natural, fluent English translation:\n\n**\"I use illusion to combat the mediocrity of reality.\"**\n\nThis translation preserves the philosophical tone of the original while sounding natural in English. The phrase expresses a sentiment common in existentialist and romantic thought—that one might employ imagination, fantasy, or illusion as a means of transcending or resisting the mundanity of everyday existence."
+      },
+      {
+        "value": "3",
+        "label": "We cannot truly know another person."
+      },
+      {
+        "value": "4",
+        "label": "Because I love them, they shine."
+      }
+    ]
+  },
+  "17": {
+    "question": "**Translation:**\n\n\"You and a friend have completely different understandings of the same thing. Your first reaction is:\"",
+    "dimension": "phenomenon",
+    "type": "abstract",
+    "options": [
+      {
+        "value": "1",
+        "label": "Among them, there must be someone who got the facts wrong."
+      },
+      {
+        "value": "2",
+        "label": "Here is a natural English translation:\n\n**We each stand at different positions.**\n\nOr alternatively:\n\n**We each stand on different ground.**\n\nThis phrase expresses the philosophical idea that people occupy different standpoints or perspectives, which naturally leads to different viewpoints."
+      },
+      {
+        "value": "3",
+        "label": "Here is a natural, fluent English translation:\n\n**\"What each person sees is inherently different.\"**\n\nAlternative renderings:\n\n- \"Everyone naturally sees things differently.\"\n- \"Each of us perceives things differently by nature.\"\n\nThis statement reflects a philosophical view about the subjectivity of perception—suggesting that differing perspectives are natural and inevitable rather than contingent or changeable."
+      },
+      {
+        "value": "4",
+        "label": "Perhaps things themselves have no fixed form."
+      }
+    ]
+  }
+}

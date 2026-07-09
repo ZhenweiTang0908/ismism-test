@@ -19,14 +19,21 @@ export const metadata: Metadata = {
   description: "测试用户在场域、本体、现象三条哲学轴线上的倾向。",
 };
 
-export default function RootLayout({
+export async function generateStaticParams() {
+  return [{ lang: "zh" }, { lang: "en" }];
+}
+
+export default async function RootLayout({
   children,
+  params,
 }: Readonly<{
   children: React.ReactNode;
+  params: Promise<{ lang: string }>;
 }>) {
+  const resolvedParams = await params;
   return (
     <html
-      lang="zh-CN"
+      lang={resolvedParams.lang === "en" ? "en" : "zh-CN"}
       className={`${bodyFont.variable} ${displayFont.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>

@@ -1,6 +1,8 @@
 import fullCatalogJson from "@/data/ism.json";
 import questionBankJson from "@/data/ismism-question-bank.json";
 import enhancedCatalogJson from "@/data/ismism-sum-enhanced.json";
+import questionBankEnJson from "@/data/ismism-question-bank-en.json";
+import enhancedCatalogEnJson from "@/data/ismism-sum-enhanced-en.json";
 import { FALLBACK_ISM_INFO } from "@/lib/ismism/mock-data";
 import {
   CHOICE_VALUES,
@@ -241,37 +243,49 @@ const pickDimensionQuestions = (
   );
 };
 
-let questionsPromise: Promise<QuizQuestion[]> | null = null;
-let enhancedCatalogPromise: Promise<Record<string, IsmCatalogEntry>> | null = null;
+const questionsCache = new Map<string, Promise<QuizQuestion[]>>();
+const enhancedCatalogCache = new Map<string, Promise<Record<string, IsmCatalogEntry>>>();
 let fullCatalogPromise: Promise<Record<string, IsmCatalogEntry>> | null = null;
 
-export const getQuizQuestions = async () => {
-  questionsPromise ??= (async () => {
-    const normalized = Object.entries(questionBankJson as Record<string, RawQuestion>)
-      .map(([id, rawQuestion]) => normalizeDatasetQuestion(id, rawQuestion))
-      .filter((question): question is QuizQuestion => question !== null);
+export const getQuizQuestions = async (lang: string = "zh") => {
+  if (!questionsCache.has(lang)) {
+    questionsCache.set(
+      lang,
+      (async () => {
+        const sourceJson = lang === "en" ? questionBankEnJson : questionBankJson;
+        const normalized = Object.entries(sourceJson as Record<string, RawQuestion>)
+          .map(([id, rawQuestion]) => normalizeDatasetQuestion(id, rawQuestion))
+          .filter((question): question is QuizQuestion => question !== null);
 
-    validateQuestionBank(normalized);
+        validateQuestionBank(normalized);
 
-    const ordered = DIMENSION_ORDER.flatMap((dimension) =>
-      pickDimensionQuestions(dimension, normalized),
+        const ordered = DIMENSION_ORDER.flatMap((dimension) =>
+          pickDimensionQuestions(dimension, normalized),
+        );
+
+        return shuffleQuestions(ordered);
+      })(),
     );
+  }
 
-    return shuffleQuestions(ordered);
-  })();
-
-  return questionsPromise;
+  return questionsCache.get(lang)!;
 };
 
-export const getEnhancedIsmCatalog = async () => {
-  enhancedCatalogPromise ??= (async () => {
-    return {
-      ...FALLBACK_ISM_INFO,
-      ...(enhancedCatalogJson as Record<string, IsmCatalogEntry>),
-    };
-  })();
+export const getEnhancedIsmCatalog = async (lang: string = "zh") => {
+  if (!enhancedCatalogCache.has(lang)) {
+    enhancedCatalogCache.set(
+      lang,
+      (async () => {
+        const sourceJson = lang === "en" ? enhancedCatalogEnJson : enhancedCatalogJson;
+        return {
+          ...FALLBACK_ISM_INFO,
+          ...(sourceJson as Record<string, IsmCatalogEntry>),
+        };
+      })(),
+    );
+  }
 
-  return enhancedCatalogPromise;
+  return enhancedCatalogCache.get(lang)!;
 };
 
 export const getFullIsmCatalog = async () => {

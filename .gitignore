@@ -230,3 +230,6 @@ build/
 .next/
 !website/lib/
 !website/lib/**
+
+output/
+tmp/

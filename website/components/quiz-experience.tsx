@@ -24,6 +24,7 @@ type Phase = "intro" | "quiz" | "result";
 type QuizExperienceProps = {
   questions: QuizQuestion[];
   enhancedCatalog: Record<string, IsmCatalogEntry>;
+  lang?: string;
 };
 
 const optionToneMap: Record<ChoiceValue, string> = {
@@ -94,13 +95,13 @@ const splitExamplePeople = (value: string) => {
   };
 };
 
-const requestAiInterpretation = async (result: QuizResult) => {
+const requestAiInterpretation = async (result: QuizResult, lang?: string) => {
   const response = await fetch("/api/quiz/explain", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ result }),
+    body: JSON.stringify({ result, lang }),
   });
 
   const payload = (await response.json()) as Partial<QuizResultAiInterpretationResponse> & {
@@ -134,7 +135,7 @@ const requestPreviewResult = async (accessKey: string, coreCode: string) => {
   return payload;
 };
 
-export default function QuizExperience({ questions, enhancedCatalog }: QuizExperienceProps) {
+export default function QuizExperience({ questions, enhancedCatalog, lang }: QuizExperienceProps) {
   const [phase, setPhase] = useState<Phase>("intro");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<AnswerMap>({});
@@ -413,7 +414,7 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
     setIsGeneratingAiInterpretation(true);
 
     try {
-      const interpretation = await requestAiInterpretation(response.result);
+      const interpretation = await requestAiInterpretation(response.result, lang);
       setAiInterpretation(interpretation);
     } catch (interpretationError) {
       setAiError(
@@ -439,7 +440,7 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
       setIsGeneratingAiInterpretation(true);
 
       try {
-        const interpretation = await requestAiInterpretation(response.result);
+        const interpretation = await requestAiInterpretation(response.result, lang);
         if (!cancelled) {
           setAiInterpretation(interpretation);
         }
@@ -622,16 +623,16 @@ export default function QuizExperience({ questions, enhancedCatalog }: QuizExper
 
         <article className="rounded-[1.5rem] border border-stone-200/80 bg-white/92 p-5 shadow-[0_14px_36px_rgba(43,33,23,0.05)] sm:rounded-[1.8rem] sm:p-7">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <h3 className="font-serif text-2xl font-semibold text-stone-950">AI 解读</h3>
+            <h3 className="font-serif text-2xl font-semibold text-stone-950">{lang === 'en' ? 'AI Interpretation' : 'AI 解读'}</h3>
             {isGeneratingAiInterpretation ? (
-              <span className="text-sm text-stone-500">正在生成中...</span>
+              <span className="text-sm text-stone-500">{lang === 'en' ? 'Generating...' : '正在生成中...'}</span>
             ) : null}
           </div>
 
           {aiInterpretation ? (
             <div className="mt-5 grid gap-4">
               <article className="rounded-[1.2rem] border border-stone-200 bg-stone-50/70 p-4">
-                <p className="text-base font-semibold text-stone-900">通俗解释</p>
+                <p className="text-base font-semibold text-stone-900">{lang === 'en' ? 'Simple Explanation' : '通俗解释'}</p>
                 <div className="mt-2 text-[15px] leading-8 text-stone-700">
                   {aiInterpretation.simpleExplanation.split('\n').map((paragraph, index) => (
                     <p key={index} className="mb-2 last:mb-0">{paragraph}</p>

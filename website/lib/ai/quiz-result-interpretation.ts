@@ -1,7 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { DIMENSION_LABELS } from "@/lib/ismism/types";
 import type {
@@ -12,12 +11,11 @@ import type {
 const DEFAULT_SILICONCLOUD_BASE_URL = "https://api.siliconflow.cn/v1";
 const DEFAULT_SILICONCLOUD_MODEL = "Pro/MiniMaxAI/MiniMax-M2.5";
 const DEFAULT_AZURE_API_VERSION = "2024-12-01-preview";
-const MODULE_DIR = path.dirname(fileURLToPath(import.meta.url));
-const WEBSITE_ENV_LOCAL_FILE_PATH = path.resolve(MODULE_DIR, "../../.env.local");
-const WEBSITE_ENV_FILE_PATH = path.resolve(MODULE_DIR, "../../.env");
-const ROOT_ENV_LOCAL_FILE_PATH = path.resolve(MODULE_DIR, "../../../.env.local");
-const ROOT_ENV_FILE_PATH = path.resolve(MODULE_DIR, "../../../.env");
-const OVERVIEW_FILE_PATH = path.resolve(MODULE_DIR, "../../data/overview.txt");
+
+const WEBSITE_ENV_LOCAL_FILE_PATH = path.join(process.cwd(), ".env.local");
+const WEBSITE_ENV_FILE_PATH = path.join(process.cwd(), ".env");
+const ROOT_ENV_LOCAL_FILE_PATH = path.join(process.cwd(), "../.env.local");
+const ROOT_ENV_FILE_PATH = path.join(process.cwd(), "../.env");
 
 type ChatMessage = {
   role: "system" | "user";
@@ -25,7 +23,7 @@ type ChatMessage = {
 };
 
 let cachedFallbackEnv: Map<string, string> | null = null;
-let cachedOverviewText: Promise<string> | null = null;
+const overviewCache = new Map<string, Promise<string>>();
 
 const parseDotEnv = (content: string) => {
   const values = new Map<string, string>();
@@ -90,14 +88,19 @@ const loadFallbackEnv = () => {
 
 const getServerEnv = (key: string) => process.env[key] ?? loadFallbackEnv().get(key);
 
-const readOverviewText = async () => readFile(OVERVIEW_FILE_PATH, "utf8");
-
-export const loadOverviewText = async () => {
-  cachedOverviewText ??= readOverviewText();
-  return cachedOverviewText;
+export const loadOverviewText = async (lang: string = "zh") => {
+  if (!overviewCache.has(lang)) {
+    const filename = lang === "en" ? "overview-en.txt" : "overview.txt";
+    overviewCache.set(
+      lang,
+      readFile(path.join(process.cwd(), "data", filename), "utf8")
+    );
+  }
+  return overviewCache.get(lang)!;
 };
 
-const buildSystemPrompt = () => `
+const buildSystemPrompt = (lang: string = "zh") => {
+  const base = `
 你是一个不仅懂哲学、还非常擅长“说人话”的深度生活观察员。你的任务是将深奥的哲学测评结果转换成普通人听了会直呼“太准了”的生活化解读。
 
 要求：
@@ -117,6 +120,12 @@ const buildSystemPrompt = () => `
   ]
 }
 `.trim();
+
+  if (lang === "en") {
+    return base + "\n\n**CRITICAL INSTRUCTION**: The user has selected English. You MUST translate and output your entire interpretation (all values in the JSON object) in natural, fluent English.";
+  }
+  return base;
+};
 
 const buildUserPrompt = (overviewText: string, result: QuizResult) =>
   [
@@ -360,12 +369,13 @@ const requestAzureOpenAI = async (messages: ChatMessage[]) => {
 
 export const generateQuizResultInterpretation = async (
   result: QuizResult,
+  lang: string = "zh"
 ): Promise<QuizResultAiInterpretation> => {
-  const overviewText = await loadOverviewText();
+  const overviewText = await loadOverviewText(lang);
   const messages: ChatMessage[] = [
     {
       role: "system",
-      content: buildSystemPrompt(),
+      content: buildSystemPrompt(lang),
     },
     {
       role: "user",

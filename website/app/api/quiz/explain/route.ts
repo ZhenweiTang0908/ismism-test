@@ -110,6 +110,7 @@ export async function POST(request: Request) {
   try {
     const payload = (await request.json()) as {
       result?: unknown;
+      lang?: string;
     };
 
     const result = normalizeQuizResult(payload.result);
@@ -117,7 +118,7 @@ export async function POST(request: Request) {
       return Response.json({ error: "Invalid quiz result payload" }, { status: 400 });
     }
 
-    const interpretation = await generateQuizResultInterpretation(result);
+    const interpretation = await generateQuizResultInterpretation(result, payload.lang);
     return Response.json({ interpretation });
   } catch (error) {
     return Response.json(
