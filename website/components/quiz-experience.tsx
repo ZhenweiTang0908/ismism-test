@@ -476,6 +476,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
         ...(r.englishName ? { en: r.englishName } : {}),
         ep: examplePeopleDisplay.name,
         story: r.info.simpleStory || "",
+        ...(aiInterpretation?.simpleExplanation ? { ai: aiInterpretation.simpleExplanation } : {}),
         uname: profile.name || "",
         rate: String(r.matchRate),
         fd: String(dims.field?.digit ?? ""),
