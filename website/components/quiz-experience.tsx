@@ -864,7 +864,15 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
           <p className="text-sm text-red-600">{shareError}</p>
         ) : null}
 
-        <div className="mt-2 rounded-[1.4rem] border border-stone-200/60 bg-stone-50/60 px-5 py-4">
+        <div className="mt-2 rounded-[1.4rem] border border-amber-200/70 bg-amber-50/60 px-5 py-4">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-amber-600">声明</p>
+          <p className="text-[13px] leading-6 text-stone-600">
+            Hi 大家好，我是网站作者，但不是这套理论的作者。我仅仅看了一部分原作者的视频，对哲学的了解也非常有限。这个网站其实是为了练习vibe coding做的，因此绝不是正经哲学测试。大家把它当作一个玩具愉快玩耍即可，无需较真。
+          </p>
+          <p className="mt-2 text-[13px] leading-6 text-stone-600">不过欢迎大家留下有趣的想法！可能会考虑增加一个留言板功能～</p>
+        </div>
+
+        <div className="rounded-[1.4rem] border border-stone-200/60 bg-stone-50/60 px-5 py-4">
           <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-stone-400">参考信息</p>
           <ul className="grid gap-1.5">
             <li className="flex items-start gap-2 text-[13px] text-stone-600">
@@ -1196,6 +1204,14 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="rounded-[1.4rem] border border-amber-200/70 bg-amber-50/60 px-5 py-4">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-amber-600">声明</p>
+          <p className="text-[13px] leading-6 text-stone-600">
+            Hi 大家好，我是网站作者，但不是这套理论的作者。我仅仅看了一部分原作者的视频，对哲学的了解也非常有限。这个网站其实是为了练习vibe coding做的，因此绝不是正经哲学测试。大家把它当作一个玩具愉快玩耍即可，无需较真。
+          </p>
+          <p className="mt-2 text-[13px] leading-6 text-stone-600">不过欢迎大家留下有趣的想法！</p>
         </div>
 
         <div className="rounded-[1.4rem] border border-stone-200/60 bg-stone-50/60 px-5 py-4">
