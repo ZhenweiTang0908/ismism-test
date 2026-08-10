@@ -17,7 +17,7 @@ export default function LanguageSwitcher({ currentLang }: { currentLang: string 
       onClick={toggleLanguage}
       className="absolute top-4 right-4 z-10 flex h-8 items-center justify-center rounded-full border border-stone-200/70 bg-white/70 px-3 text-xs font-medium text-stone-600 shadow-sm backdrop-blur transition hover:bg-stone-50"
     >
-      {currentLang === "en" ? "中 / EN" : "ZH / En"}
+      {currentLang === "en" ? "中文" : "EN"}
     </button>
   );
 }

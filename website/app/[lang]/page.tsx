@@ -18,9 +18,9 @@ export default async function Home({ params }: { params: Promise<{ lang: string 
       <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-5 sm:gap-6">
         <header className="rounded-[1.4rem] border border-stone-200/70 bg-white/70 px-4 py-4 shadow-[0_12px_32px_rgba(31,24,18,0.04)] backdrop-blur sm:px-6 sm:py-5">
           <h1 className="font-serif text-[clamp(2rem,6vw,3.4rem)] font-semibold leading-[1.02] text-stone-950">
-            {lang === "en" ? "Test your " : "测一测你的"}
+            {lang === "en" ? "Explore your " : "测一测你的"}
             <span className="bg-[linear-gradient(120deg,#0f766e,#c2410c)] bg-clip-text text-transparent">
-              {lang === "en" ? "Philosophical Tendency" : "哲学倾向"}
+              {lang === "en" ? "philosophical tendency" : "哲学倾向"}
             </span>
           </h1>
         </header>

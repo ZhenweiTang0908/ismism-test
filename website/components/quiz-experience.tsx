@@ -3,6 +3,7 @@
 import { startTransition, useEffect, useMemo, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Typewriter } from "./typewriter";
+import { getLocaleCopy } from "@/lib/i18n";
 
 import type {
   AnswerMap,
@@ -29,11 +30,24 @@ type QuizExperienceProps = {
   lang?: string;
 };
 
-const optionToneMap: Record<ChoiceValue, string> = {
-  "1": "from-rose-100 to-pink-200 text-rose-900",
-  "2": "from-amber-100 to-orange-200 text-amber-950",
-  "3": "from-violet-100 to-purple-200 text-violet-900",
-  "4": "from-teal-100 to-emerald-200 text-teal-950",
+type BatterySnapshot = {
+  charging: boolean;
+  level: number;
+  chargingTime: number;
+  dischargingTime: number;
+};
+
+type NetworkSnapshot = {
+  effectiveType?: string;
+  downlink?: number;
+  rtt?: number;
+  saveData?: boolean;
+};
+
+type NavigatorWithExtras = Navigator & {
+  getBattery?: () => Promise<BatterySnapshot>;
+  connection?: NetworkSnapshot;
+  deviceMemory?: number;
 };
 
 const optionIdleMap: Record<ChoiceValue, string> = {
@@ -41,13 +55,6 @@ const optionIdleMap: Record<ChoiceValue, string> = {
   "2": "border-amber-200/60 bg-amber-50/40 text-stone-700 hover:border-amber-300 hover:bg-amber-50 hover:shadow-[0_12px_26px_rgba(245,158,11,0.06)]",
   "3": "border-violet-200/60 bg-violet-50/40 text-stone-700 hover:border-violet-300 hover:bg-violet-50 hover:shadow-[0_12px_26px_rgba(139,92,246,0.06)]",
   "4": "border-teal-200/60 bg-teal-50/40 text-stone-700 hover:border-teal-300 hover:bg-teal-50 hover:shadow-[0_12px_26px_rgba(20,184,166,0.06)]",
-};
-
-const optionDotMap: Record<ChoiceValue, string> = {
-  "1": "border-rose-400 bg-rose-400 text-white",
-  "2": "border-amber-500 bg-amber-500 text-white",
-  "3": "border-violet-500 bg-violet-500 text-white",
-  "4": "border-teal-500 bg-teal-500 text-white",
 };
 
 const dimensionToneMap = {
@@ -68,25 +75,13 @@ const dimensionToneMap = {
   },
 } as const;
 
-const conciseDimensionLabelMap = {
-  field: "场域",
-  ontology: "本体",
-  phenomenon: "现象",
-} as const;
-
-const dimensionCaptionMap = {
-  field: "世界是什么样",
-  ontology: "事物怎么存在",
-  phenomenon: "怎么认识世界",
-} as const;
-
-const splitExamplePeople = (value: string) => {
+const splitExamplePeople = (value: string, fallbackName: string) => {
   const trimmed = value.trim();
   const match = trimmed.match(/^([^，：:]+)[，：:]\s*(.+)$/);
 
   if (!match) {
     return {
-      name: trimmed,
+      name: trimmed || fallbackName,
       description: "",
     };
   }
@@ -111,19 +106,19 @@ const requestAiInterpretation = async (result: QuizResult, lang?: string) => {
   };
 
   if (!response.ok || !payload.interpretation) {
-    throw new Error(payload.error || "AI 解读生成失败，请稍后重试。");
+    throw new Error(payload.error || getLocaleCopy(lang).errors.ai);
   }
 
   return payload.interpretation;
 };
 
-const requestPreviewResult = async (accessKey: string, coreCode: string) => {
+const requestPreviewResult = async (accessKey: string, coreCode: string, lang?: string) => {
   const response = await fetch("/api/quiz/preview", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ accessKey, coreCode }),
+    body: JSON.stringify({ accessKey, coreCode, lang }),
   });
 
   const payload = (await response.json()) as SubmitQuizResponse & {
@@ -131,13 +126,14 @@ const requestPreviewResult = async (accessKey: string, coreCode: string) => {
   };
 
   if (!response.ok || !payload.result) {
-    throw new Error(payload.error || "测试结果打开失败，请稍后重试。");
+    throw new Error(payload.error || getLocaleCopy(lang).errors.preview);
   }
 
   return payload;
 };
 
 export default function QuizExperience({ questions, enhancedCatalog, lang }: QuizExperienceProps) {
+  const copy = getLocaleCopy(lang);
   const [phase, setPhase] = useState<Phase>("intro");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<AnswerMap>({});
@@ -163,9 +159,9 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
   const maxScrollRef = useRef(0);
   const [visibilityTime, setVisibilityTime] = useState(0);
   const visibilityStartRef = useRef<number | null>(null);
-  const [batteryInfo, setBatteryInfo] = useState<any>(null);
-  const [networkInfo, setNetworkInfo] = useState<any>(null);
-  const [performanceInfo, setPerformanceInfo] = useState<any>(null);
+  const [batteryInfo, setBatteryInfo] = useState<BatterySnapshot | null>(null);
+  const [networkInfo, setNetworkInfo] = useState<NetworkSnapshot | null>(null);
+  const [performanceInfo, setPerformanceInfo] = useState<Record<string, number> | null>(null);
   const [fingerprint, setFingerprint] = useState<string>("");
 
   // 收集点击、键盘、滚动、可见性、性能等信息
@@ -192,8 +188,9 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
     if (document.visibilityState === "visible") visibilityStartRef.current = Date.now();
 
     // 收集电池信息（如果支持）
-    if ((navigator as any).getBattery) {
-      (navigator as any).getBattery().then((bat: any) => setBatteryInfo({
+    const navigatorWithExtras = navigator as NavigatorWithExtras;
+    if (navigatorWithExtras.getBattery) {
+      navigatorWithExtras.getBattery().then((bat) => setBatteryInfo({
         charging: bat.charging,
         level: bat.level,
         chargingTime: bat.chargingTime,
@@ -201,8 +198,8 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
       }));
     }
     // 网络信息
-    if ((navigator as any).connection) {
-      const conn = (navigator as any).connection;
+    if (navigatorWithExtras.connection) {
+      const conn = navigatorWithExtras.connection;
       setNetworkInfo({
         effectiveType: conn.effectiveType,
         downlink: conn.downlink,
@@ -234,7 +231,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
         const dataURL = canvas.toDataURL();
         setFingerprint(dataURL);
       }
-    } catch (e) {
+    } catch {
       // ignore
     }
 
@@ -279,8 +276,8 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
 
   const shuffledOptions = shuffledOptionsMap[currentQuestion?.id] ?? currentQuestion?.options ?? [];
   const examplePeopleDisplay = response?.result?.info.examplePeople
-    ? splitExamplePeople(response.result.info.examplePeople)
-    : { name: "暂无典型人物", description: "" };
+    ? splitExamplePeople(response.result.info.examplePeople, copy.catalog.noRepresentative)
+    : { name: copy.catalog.noRepresentative, description: "" };
 
   const updateName = (value: string) => {
     setProfile((previous) => ({
@@ -328,12 +325,12 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
   };
 
   const openPreviewResult = async () => {
-    const accessKey = window.prompt("请输入测试密钥");
+    const accessKey = window.prompt(lang === "en" ? "Enter the preview access key" : "请输入测试密钥");
     if (accessKey === null) {
       return;
     }
 
-    const coreCode = window.prompt("请输入结果代码，例如 1-1-1");
+    const coreCode = window.prompt(lang === "en" ? "Enter a result code, such as 1-1-1" : "请输入结果代码，例如 1-1-1");
     if (coreCode === null) {
       return;
     }
@@ -342,7 +339,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
     setIsSubmitting(true);
 
     try {
-      const payload = await requestPreviewResult(accessKey, coreCode);
+      const payload = await requestPreviewResult(accessKey, coreCode, lang);
 
       startTransition(() => {
         setResponse(payload);
@@ -352,7 +349,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
       setError(
         previewError instanceof Error
           ? previewError.message
-          : "测试结果打开失败，请稍后重试。",
+          : copy.errors.preview,
       );
     } finally {
       setIsSubmitting(false);
@@ -361,7 +358,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
 
   const submitQuiz = async () => {
     if (!allAnswered) {
-      setError("还有题目未作答，完成后才能提交。");
+      setError(copy.errors.incomplete);
       return;
     }
 
@@ -377,6 +374,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
         body: JSON.stringify({
           answers,
           respondent: profile,
+          lang,
           clientData: {
             screenWidth: window.screen.width,
             screenHeight: window.screen.height,
@@ -385,7 +383,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
             platform: navigator.platform,
             timezoneOffset: new Date().getTimezoneOffset(),
             colorDepth: window.screen.colorDepth,
-            deviceMemory: (navigator as any).deviceMemory,
+            deviceMemory: (navigator as NavigatorWithExtras).deviceMemory,
             hardwareConcurrency: navigator.hardwareConcurrency,
             touchSupport: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
             // 额外信息
@@ -408,7 +406,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
       };
 
       if (!submission.ok || !payload.result) {
-        throw new Error(payload.error || "生成结果失败，请稍后重试。");
+        throw new Error(payload.error || copy.errors.submit);
       }
 
       startTransition(() => {
@@ -419,7 +417,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
       setError(
         submissionError instanceof Error
           ? submissionError.message
-          : "生成结果失败，请稍后重试。",
+          : copy.errors.submit,
       );
     } finally {
       setIsSubmitting(false);
@@ -489,7 +487,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
       const url = `/api/share-card?${params.toString()}`;
 
       const imgRes = await fetch(url);
-      if (!imgRes.ok) throw new Error("图片生成失败");
+      if (!imgRes.ok) throw new Error(lang === "en" ? "The result image could not be generated." : "图片生成失败");
       const blob = await imgRes.blob();
       const fileName = `ismism-${r.coreCode}.png`;
 
@@ -501,7 +499,9 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
       ) {
         await navigator.share({
           files: [new File([blob], fileName, { type: "image/png" })],
-          title: `我的哲学倾向：${r.coreCode} ${r.name}`,
+          title: lang === "en"
+            ? `My philosophical tendency: ${r.coreCode} ${r.name}`
+            : `我的哲学倾向：${r.coreCode} ${r.name}`,
         });
       } else {
         // 桌面端：直接下载
@@ -514,7 +514,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
       }
     } catch (err) {
       if (err instanceof Error && err.name !== "AbortError") {
-        setShareError("图片保存失败，请重试。");
+        setShareError(lang === "en" ? "The result image could not be saved. Please try again." : "图片保存失败，请重试。");
       }
     } finally {
       setIsSharing(false);
@@ -536,7 +536,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
       setAiError(
         interpretationError instanceof Error
           ? interpretationError.message
-          : "AI 解读生成失败，请稍后重试。",
+          : copy.errors.ai,
       );
     } finally {
       setIsGeneratingAiInterpretation(false);
@@ -565,7 +565,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
           setAiError(
             interpretationError instanceof Error
               ? interpretationError.message
-              : "AI 解读生成失败，请稍后重试。",
+              : copy.errors.ai,
           );
         }
       } finally {
@@ -580,7 +580,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
     return () => {
       cancelled = true;
     };
-  }, [phase, response?.result]);
+  }, [copy.errors.ai, lang, phase, response?.result]);
 
   if (phase === "result" && response) {
     const fieldDigit = response.result.dimensionResults.find((r) => r.key === "field")?.digit;
@@ -601,13 +601,13 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
         <article className={`overflow-hidden rounded-[1.6rem] border border-white/50 bg-gradient-to-br ${bgGradient} backdrop-blur-2xl p-5 shadow-[0_24px_72px_rgba(31,24,18,0.08)] sm:rounded-[2rem] sm:p-7`}>
           <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
-              <p className="text-xs uppercase tracking-[0.35em] text-stone-500">测试结果</p>
+              <p className="text-xs uppercase tracking-[0.35em] text-stone-500">{copy.result.label}</p>
               <div className="mt-4 flex items-baseline gap-6">
                 <h2 className="font-serif text-[clamp(3.8rem,10vw,6.8rem)] font-semibold leading-none tracking-[-0.05em] bg-[linear-gradient(135deg,#1c1917,#0f766e_45%,#7c3aed)] bg-clip-text text-transparent">
                   {response.result.coreCode}
                 </h2>
                 <div className="flex flex-col border-l border-stone-200 pl-6">
-                  <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400">分析准确度</span>
+                  <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400">{copy.result.matchRate}</span>
                   <span className="mt-1 font-serif text-3xl font-bold text-stone-800">
                     {response.result.matchRate}<span className="text-lg ml-0.5 text-stone-400">%</span>
                   </span>
@@ -623,7 +623,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
               ) : null}
               
               <div className="mt-8 text-sm text-stone-500">
-                1=秩序 2=冲突 3=调和 4=虚无
+                {copy.result.scoreLegend}
               </div>
             </div>
 
@@ -659,14 +659,14 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                       className={`rounded-[1rem] border p-4 shadow-sm ${cardColorMap[item.key]}`}
                     >
                       <p className={`text-[15px] font-semibold ${labelColorMap[item.key]}`}>
-                        {item.key === "phenomenon" ? "认识" : conciseDimensionLabelMap[item.key]}
+                        {copy.dimensions[item.key]}
                       </p>
                       <p className="mt-1.5 text-[12px] text-stone-400">
                         {item.key === "field"
-                          ? "世界是什么样"
+                          ? copy.dimensionCaptions.field
                           : item.key === "ontology"
-                            ? "事物怎么存在"
-                            : "怎么认识世界"}
+                            ? copy.dimensionCaptions.ontology
+                            : copy.dimensionCaptions.phenomenon}
                       </p>
                       <p className={`mt-4 text-[16px] font-bold sm:text-[1.1rem] ${markerColorMap[item.key]}`}>
                         {item.marker}
@@ -680,39 +680,19 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
         </article>
 
         <article className="rounded-[1.5rem] border border-stone-200/80 bg-white/92 p-5 shadow-[0_14px_36px_rgba(43,33,23,0.05)] sm:rounded-[1.8rem] sm:p-7">
-          <h3 className="font-serif text-2xl font-semibold text-stone-950">第一个数字</h3>
+          <h3 className="font-serif text-2xl font-semibold text-stone-950">{copy.result.firstDimension}</h3>
           <p className="mt-4 text-sm leading-7 text-stone-700 sm:text-base sm:leading-8">
-            第一个数字是场域，也是这套结果里最先看的因素。它回答的其实是：你默认觉得世界背景是什么样。很多后面的判断，都会先被这个底色影响。
+            {copy.result.firstDimensionDescription}
           </p>
           <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-4 sm:gap-4">
-            {[
-              {
-                digit: 1,
-                title: "实在论",
-                desc: "如果你在这个维度选了 1，你通常会将世界看作一个预先存在的现实背景。规则、环境和秩序先于个人而存在，人需要先看清现实，再决定如何行动。",
-              },
-              {
-                digit: 2,
-                title: "形而上学",
-                desc: "选 2 代表你不会只看表面现象，而是习惯追问背后的原则和机制。你会觉得世界不是杂乱无章的，而是有一套更深层的逻辑和结构在支撑。",
-              },
-              {
-                digit: 3,
-                title: "观念论",
-                desc: "选 3 说明你认为世界离不开个人的视角和解读。对你来说，现实总会通过人的理解、立场和赋予的意义被重新组织，主观感受非常重要。",
-              },
-              {
-                digit: 4,
-                title: "唯物主义",
-                desc: "选 4 代表你更倾向于在行动和关系中把握现实。你会更在意具体的条件、行动的过程以及现实是如何被改变的，而不是单纯停留在抽象的原则上。",
-              },
-            ].map((item) => {
+            {copy.result.firstDimensionOptions.map((item, index) => {
+              const digit = (index + 1) as 1 | 2 | 3 | 4;
               const isSelected =
-                item.digit ===
+                digit ===
                 response.result.dimensionResults.find((r) => r.key === "field")?.digit;
               return (
                 <div
-                  key={item.digit}
+                  key={digit}
                   className={`rounded-[1.2rem] p-4 sm:p-5 ${
                     isSelected
                       ? "bg-stone-950 text-white shadow-[0_14px_34px_rgba(31,24,18,0.15)]"
@@ -725,7 +705,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                         isSelected ? "bg-stone-800 text-stone-300" : "bg-stone-100 text-stone-500"
                       }`}
                     >
-                      {item.digit}
+                      {digit}
                     </span>
                     <span className="font-semibold text-base sm:text-lg">{item.title}</span>
                   </div>
@@ -734,7 +714,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                       isSelected ? "text-stone-300" : "text-stone-600"
                     }`}
                   >
-                    {item.desc}
+                    {item.description}
                   </p>
                 </div>
               );
@@ -743,7 +723,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
         </article>
 
         <article className="rounded-[1.5rem] border border-stone-200/80 bg-white/92 p-5 shadow-[0_14px_36px_rgba(43,33,23,0.05)] sm:rounded-[1.8rem] sm:p-7">
-          <h3 className="font-serif text-2xl font-semibold text-stone-950">一个例子</h3>
+          <h3 className="font-serif text-2xl font-semibold text-stone-950">{copy.result.example}</h3>
           <p className="mt-4 text-[15px] leading-8 text-stone-700">
             {response.result.info.simpleStory}
           </p>
@@ -751,16 +731,16 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
 
         <article className="rounded-[1.5rem] border border-stone-200/80 bg-white/92 p-5 shadow-[0_14px_36px_rgba(43,33,23,0.05)] sm:rounded-[1.8rem] sm:p-7">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <h3 className="font-serif text-2xl font-semibold text-stone-950">{lang === 'en' ? 'AI Interpretation' : 'AI 解读'}</h3>
+            <h3 className="font-serif text-2xl font-semibold text-stone-950">{copy.result.aiInterpretation}</h3>
             {isGeneratingAiInterpretation ? (
-              <span className="text-sm text-stone-500">{lang === 'en' ? 'Generating...' : '正在生成中...'}</span>
+              <span className="text-sm text-stone-500">{copy.result.generating}</span>
             ) : null}
           </div>
 
           {aiInterpretation ? (
             <div className="mt-5 grid gap-4">
               <article className="rounded-[1.2rem] border border-stone-200 bg-stone-50/70 p-4">
-                <p className="text-base font-semibold text-stone-900">{lang === 'en' ? 'Simple Explanation' : '通俗解释'}</p>
+                <p className="text-base font-semibold text-stone-900">{copy.result.simpleExplanation}</p>
                 <div className="mt-2 text-[15px] leading-8 text-stone-700">
                   {aiInterpretation.simpleExplanation.split('\n').map((paragraph, index) => (
                     <div key={index} className="mb-2 last:mb-0">
@@ -777,11 +757,11 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                     className={`rounded-[1.4rem] border p-6 shadow-sm ${dimensionToneMap[item.key].panel}`}
                   >
                     <p className="text-2xl font-bold text-stone-900 mb-2">
-                      {item.label}：{dimensionCaptionMap[item.key]}
+                      {item.label}: {copy.dimensionCaptions[item.key]}
                     </p>
                     <div className="mb-4">
                       <span className="text-xl font-semibold text-stone-700">
-                        {item.marker || "分析中..."}
+                        {item.marker || copy.result.analyzing}
                       </span>
                     </div>
                     <div className="text-[15px] leading-8 text-stone-700 min-h-[4rem]">
@@ -795,7 +775,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
 
           {!aiInterpretation && isGeneratingAiInterpretation ? (
             <div className="mt-5 rounded-[1.2rem] border border-stone-200 bg-stone-50/70 p-4 text-sm leading-7 text-stone-600">
-              AI 正在生成可读版解释，请稍候。
+              {copy.result.aiWaiting}
             </div>
           ) : null}
 
@@ -808,7 +788,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                 disabled={isGeneratingAiInterpretation}
                 className="mt-4 rounded-full border border-red-300 px-4 py-2 text-sm font-medium text-red-700 transition duration-200 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
               >
-                重新生成 AI 解读
+                {copy.result.retryAi}
               </button>
             </div>
           ) : null}
@@ -820,21 +800,21 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
             onClick={resetQuiz}
             className="w-full rounded-full bg-stone-950 px-5 py-3 text-sm font-medium text-stone-50 transition duration-200 hover:-translate-y-0.5 hover:bg-stone-800 hover:shadow-[0_10px_24px_rgba(28,25,23,0.18)] active:translate-y-0 sm:w-auto"
           >
-            重新测试
+            {copy.result.retake}
           </button>
           <button
             type="button"
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             className="w-full rounded-full border border-stone-300 px-5 py-3 text-sm font-medium text-stone-700 transition duration-200 hover:-translate-y-0.5 hover:border-stone-500 hover:bg-white hover:text-stone-950 active:translate-y-0 sm:w-auto"
           >
-            回到顶部
+            {copy.result.backToTop}
           </button>
           <button
             type="button"
             onClick={() => setIsOtherIsmsModalOpen(true)}
             className="w-full rounded-full border border-stone-200 bg-white px-5 py-3 text-sm font-medium text-stone-700 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-teal-200 hover:bg-teal-50 hover:text-teal-900 active:translate-y-0 sm:w-auto"
           >
-            查看其他主义
+            {copy.intro.otherIsms}
           </button>
           <button
             type="button"
@@ -848,14 +828,14 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                生成中...
+                {copy.result.savingCard}
               </>
             ) : (
               <>
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
-                保存结果卡片
+                {copy.result.saveCard}
               </>
             )}
           </button>
@@ -865,34 +845,34 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
         ) : null}
 
         <div className="mt-2 rounded-[1.4rem] border border-amber-200/70 bg-amber-50/60 px-5 py-4">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-amber-600">声明</p>
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-amber-600">{copy.intro.declaration}</p>
           <p className="text-[13px] leading-6 text-stone-600">
-            Hi 大家好，我是网站作者，但不是这套理论的作者。我仅仅看了一部分原作者的视频，对哲学的了解也非常有限。这个网站其实是为了练习vibe coding做的，因此绝不是正经哲学测试。大家把它当作一个玩具愉快玩耍即可，无需较真。
+            {copy.intro.declarationBody}
           </p>
-          <p className="mt-2 text-[13px] leading-6 text-stone-600">不过欢迎大家留下有趣的想法！可能会考虑增加一个留言板功能～</p>
+          <p className="mt-2 text-[13px] leading-6 text-stone-600">{copy.intro.declarationInvite}</p>
         </div>
 
         <div className="rounded-[1.4rem] border border-stone-200/60 bg-stone-50/60 px-5 py-4">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-stone-400">参考信息</p>
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-stone-400">{copy.intro.references}</p>
           <ul className="grid gap-1.5">
             <li className="flex items-start gap-2 text-[13px] text-stone-600">
               <span className="mt-0.5 shrink-0 text-stone-400">▸</span>
               <span>
-                原作者讲解：
+                {copy.intro.originalAuthor}
                 <a
                   href="https://www.bilibili.com/video/BV1JT4y1K7dp/?spm_id_from=333.337.search-card.all.click"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-medium text-teal-700 underline-offset-2 transition hover:text-teal-900 hover:underline"
                 >
-                  【主义主义】哲学意识形态大全-总纲
+                  {copy.intro.originalVideo}
                 </a>
               </span>
             </li>
             <li className="flex items-start gap-2 text-[13px] text-stone-600">
               <span className="mt-0.5 shrink-0 text-stone-400">▸</span>
               <span>
-                主义主义魔方：
+                {copy.intro.ismismCube}
                 <a
                   href="https://ismismtag.com/"
                   target="_blank"
@@ -919,9 +899,9 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
           >
             <div className="flex items-center justify-between border-b border-stone-100 px-5 py-4 sm:px-7 sm:py-5">
               <div>
-                <h3 className="font-serif text-xl font-bold text-stone-900">全部主义列表</h3>
+                <h3 className="font-serif text-xl font-bold text-stone-900">{copy.catalog.listTitle}</h3>
                 <p className="mt-0.5 text-xs text-stone-400">
-                  {Object.keys(enhancedCatalog).filter((k) => /^[1-4]-[1-4]-[1-4]$/.test(k)).length} 个主义，点击查看了解详情
+                  {copy.catalog.listDescription(Object.keys(enhancedCatalog).filter((k) => /^[1-4]-[1-4]-[1-4]$/.test(k)).length)}
                 </p>
               </div>
               <button
@@ -938,9 +918,9 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
               <table className="w-full">
                 <thead className="sticky top-0 z-10 bg-stone-50/95 backdrop-blur-sm">
                   <tr className="border-b border-stone-100">
-                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-stone-400 sm:px-6">代码</th>
-                    <th className="px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-stone-400">主义名称</th>
-                    <th className="hidden px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-stone-400 sm:table-cell">代表人物</th>
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-stone-400 sm:px-6">{copy.catalog.code}</th>
+                    <th className="px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-stone-400">{copy.catalog.name}</th>
+                    <th className="hidden px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-stone-400 sm:table-cell">{copy.catalog.representative}</th>
                     <th className="px-4 py-3 sm:px-6"></th>
                   </tr>
                 </thead>
@@ -972,7 +952,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                           </td>
                           <td className="px-2 py-3">
                             <span className="text-sm font-semibold text-stone-900">
-                              {entry.ch_name || "未命名"}
+                              {entry.ch_name || copy.catalog.unnamed}
                             </span>
                           </td>
                           <td className="hidden px-2 py-3 sm:table-cell">
@@ -991,7 +971,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                               }}
                               className="whitespace-nowrap rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-xs font-medium text-teal-700 transition hover:bg-teal-100 hover:text-teal-900"
                             >
-                              查看
+                              {copy.catalog.view}
                             </button>
                           </td>
                         </tr>
@@ -1031,7 +1011,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                 </h4>
                 {enhancedCatalog[selectedOtherIsmCode].example_people && (
                   <p className="mt-1.5 text-sm text-stone-500">
-                    代表人物：{enhancedCatalog[selectedOtherIsmCode].example_people}
+                    {copy.catalog.representativePrefix}{enhancedCatalog[selectedOtherIsmCode].example_people}
                   </p>
                 )}
               </div>
@@ -1039,7 +1019,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                 <button
                   onClick={() => setIsIsmDetailOpen(false)}
                   className="rounded-full bg-stone-100 p-2 text-stone-500 transition hover:bg-stone-200 hover:text-stone-800"
-                  title="返回列表"
+                  title={copy.catalog.backToList}
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
@@ -1048,7 +1028,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                 <button
                   onClick={() => { setIsIsmDetailOpen(false); setIsOtherIsmsModalOpen(false); }}
                   className="rounded-full bg-stone-100 p-2 text-stone-400 transition hover:bg-stone-200 hover:text-stone-700"
-                  title="关闭"
+                  title={copy.catalog.close}
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
@@ -1066,7 +1046,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                       </svg>
                     </span>
-                    <h5 className="text-sm font-semibold text-teal-800">一个例子</h5>
+                    <h5 className="text-sm font-semibold text-teal-800">{copy.catalog.example}</h5>
                   </div>
                   <p className="text-[14px] leading-7 text-stone-600">
                     {enhancedCatalog[selectedOtherIsmCode].simple_story}
@@ -1074,7 +1054,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                 </div>
               ) : (
                 <div className="rounded-[1.3rem] border border-stone-100 bg-stone-50 p-5">
-                  <p className="text-sm text-stone-400">暂无具体例子。</p>
+                    <p className="text-sm text-stone-400">{copy.catalog.noExample}</p>
                 </div>
               )}
 
@@ -1086,7 +1066,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                         <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                       </svg>
                     </span>
-                    <h5 className="text-sm font-semibold text-stone-800">核心特征</h5>
+                    <h5 className="text-sm font-semibold text-stone-800">{copy.catalog.coreFeatures}</h5>
                   </div>
                   <div className="grid gap-2">
                     {(enhancedCatalog[selectedOtherIsmCode].feature_list || []).map((feature, idx) => (
@@ -1112,31 +1092,31 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
         <div className="grid gap-4 lg:grid-cols-[0.92fr_1.08fr]">
           <div className="rounded-[1.6rem] border border-stone-200/70 bg-[linear-gradient(145deg,rgba(15,118,110,0.08),rgba(255,255,255,0.96)_28%,rgba(255,247,237,0.88))] p-5 shadow-[0_18px_60px_rgba(31,24,18,0.07)] sm:rounded-[1.9rem] sm:p-8">
             <h3 className="font-serif text-2xl font-semibold text-stone-950 sm:text-3xl">
-              开始测试
+              {copy.intro.start}
             </h3>
             <p className="mt-3 text-sm leading-7 text-stone-800">
-              每道题最多可选 2 个答案
+              {copy.intro.maxChoices}
             </p>
 
             <div className="mt-6 grid gap-4">
               <label className="grid gap-2">
-                <span className="text-sm text-stone-500">昵称（可选）</span>
+                <span className="text-sm text-stone-500">{copy.intro.nickname}</span>
                 <input
                   value={profile.name}
                   onChange={(event) => updateName(event.target.value)}
                   className="rounded-2xl border border-stone-200 bg-white/82 px-4 py-3 text-sm text-stone-900 outline-none transition duration-200 placeholder:text-stone-400 focus:border-teal-600 focus:bg-white"
-                  placeholder="留空也可以"
+                  placeholder={copy.intro.nicknamePlaceholder}
                 />
               </label>
 
               <label className="grid gap-2">
-                <span className="text-sm text-stone-500">留言（可选）</span>
+                <span className="text-sm text-stone-500">{copy.intro.message}</span>
                 <textarea
                   value={profile.message}
                   onChange={(event) => updateMessage(event.target.value)}
                   rows={4}
                   className="rounded-2xl border border-stone-200 bg-white/82 px-4 py-3 text-sm leading-7 text-stone-900 outline-none transition duration-200 placeholder:text-stone-400 focus:border-teal-600 focus:bg-white"
-                  placeholder="可留一句想法"
+                  placeholder={copy.intro.messagePlaceholder}
                 />
               </label>
             </div>
@@ -1150,91 +1130,91 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
               disabled={isSubmitting}
               className="mt-6 w-full rounded-full bg-[linear-gradient(90deg,#0f766e,#14b8a6)] px-5 py-4 text-sm font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(15,118,110,0.28)] active:translate-y-0"
             >
-              开始答题
+              {copy.intro.startButton}
             </button>
           </div>
 
           <div className="rounded-[1.5rem] border border-stone-200/70 bg-white/94 p-5 shadow-[0_18px_60px_rgba(31,24,18,0.07)] sm:rounded-[1.9rem] sm:p-8">
             <h3 className="font-serif text-2xl font-semibold text-stone-950 sm:text-3xl">
-              这个测试在测什么
+              {copy.intro.whatItMeasures}
             </h3>
             <p className="mt-4 text-sm leading-7 text-stone-700 sm:text-base sm:leading-8">
-              这是一个庸俗的哲学意识形态分类框架，会从场域、本体和现象三个维度评估你的意识形态倾向。
+              {copy.intro.description}
             </p>
 
             <div className="mt-6 grid grid-cols-3 gap-3">
               <div className="rounded-[1rem] border border-amber-300/70 bg-gradient-to-br from-amber-50 to-yellow-100/70 p-4 sm:p-5">
-                <div className="font-semibold text-amber-900">场域</div>
-                <div className="mt-2 text-[13px] text-amber-700 sm:mt-3 sm:text-sm">世界是什么样</div>
+                <div className="font-semibold text-amber-900">{copy.dimensions.field}</div>
+                <div className="mt-2 text-[13px] text-amber-700 sm:mt-3 sm:text-sm">{copy.dimensionCaptions.field}</div>
               </div>
               <div className="rounded-[1rem] border border-teal-300/70 bg-gradient-to-br from-teal-50 to-emerald-100/70 p-4 sm:p-5">
-                <div className="font-semibold text-teal-900">本体</div>
-                <div className="mt-2 text-[13px] text-teal-700 sm:mt-3 sm:text-sm">自我如何存在</div>
+                <div className="font-semibold text-teal-900">{copy.dimensions.ontology}</div>
+                <div className="mt-2 text-[13px] text-teal-700 sm:mt-3 sm:text-sm">{copy.dimensionCaptions.ontology}</div>
               </div>
               <div className="rounded-[1rem] border border-violet-300/70 bg-gradient-to-br from-violet-50 to-purple-100/70 p-4 sm:p-5">
-                <div className="font-semibold text-violet-900">现象</div>
-                <div className="mt-2 text-[13px] text-violet-700 sm:mt-3 sm:text-sm">如何认识世界</div>
+                <div className="font-semibold text-violet-900">{copy.dimensions.phenomenon}</div>
+                <div className="mt-2 text-[13px] text-violet-700 sm:mt-3 sm:text-sm">{copy.dimensionCaptions.phenomenon}</div>
               </div>
             </div>
 
             <p className="mt-6 text-sm leading-7 text-stone-700 sm:text-base sm:leading-8">
-              每个维度会填入一个 1-4 的数字，代表你在这个维度上的倾向。最后会根据这三个数字进行分析。
+              {copy.intro.scoreDescription}
             </p>
 
             <div className="mt-6 grid grid-cols-4 gap-2 sm:gap-3">
               <div className="rounded-[1rem] border border-rose-200 bg-gradient-to-br from-rose-50 to-pink-100/60 p-3 sm:p-5">
                 <div className="font-serif text-3xl text-rose-700 sm:text-4xl">1</div>
-                <div className="mt-3 font-semibold text-stone-900 sm:mt-4">秩序</div>
-                <div className="mt-1 text-[12px] text-stone-500 sm:mt-2 sm:text-sm">环境规则</div>
+                <div className="mt-3 font-semibold text-stone-900 sm:mt-4">{copy.digitMarkers["1"].title}</div>
+                <div className="mt-1 text-[12px] text-stone-500 sm:mt-2 sm:text-sm">{copy.digitMarkers["1"].caption}</div>
               </div>
               <div className="rounded-[1rem] border border-amber-200 bg-gradient-to-br from-amber-50 to yellow-100/60 p-3 sm:p-5">
                 <div className="font-serif text-3xl text-amber-700 sm:text-4xl">2</div>
-                <div className="mt-3 font-semibold text-stone-900 sm:mt-4">冲突</div>
-                <div className="mt-1 text-[12px] text-stone-500 sm:mt-2 sm:text-sm">内在矛盾</div>
+                <div className="mt-3 font-semibold text-stone-900 sm:mt-4">{copy.digitMarkers["2"].title}</div>
+                <div className="mt-1 text-[12px] text-stone-500 sm:mt-2 sm:text-sm">{copy.digitMarkers["2"].caption}</div>
               </div>
               <div className="rounded-[1rem] border border-violet-200 bg-gradient-to-br from-violet-50 to-purple-100/60 p-3 sm:p-5">
                 <div className="font-serif text-3xl text-violet-700 sm:text-4xl">3</div>
-                <div className="mt-3 font-semibold text-stone-900 sm:mt-4">调和</div>
-                <div className="mt-1 text-[12px] text-stone-500 sm:mt-2 sm:text-sm">个人意义</div>
+                <div className="mt-3 font-semibold text-stone-900 sm:mt-4">{copy.digitMarkers["3"].title}</div>
+                <div className="mt-1 text-[12px] text-stone-500 sm:mt-2 sm:text-sm">{copy.digitMarkers["3"].caption}</div>
               </div>
               <div className="rounded-[1rem] border border-teal-200 bg-gradient-to-br from-teal-50 to-emerald-100/60 p-3 sm:p-5">
                 <div className="font-serif text-3xl text-teal-700 sm:text-4xl">4</div>
-                <div className="mt-3 font-semibold text-stone-900 sm:mt-4">虚无</div>
-                <div className="mt-1 text-[12px] text-stone-500 sm:mt-2 sm:text-sm">动态重塑</div>
+                <div className="mt-3 font-semibold text-stone-900 sm:mt-4">{copy.digitMarkers["4"].title}</div>
+                <div className="mt-1 text-[12px] text-stone-500 sm:mt-2 sm:text-sm">{copy.digitMarkers["4"].caption}</div>
               </div>
             </div>
           </div>
         </div>
 
         <div className="rounded-[1.4rem] border border-amber-200/70 bg-amber-50/60 px-5 py-4">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-amber-600">声明</p>
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-amber-600">{copy.intro.declaration}</p>
           <p className="text-[13px] leading-6 text-stone-600">
-            Hi 大家好，我是网站作者，但不是这套理论的作者。我仅仅看了一部分原作者的视频，对哲学的了解也非常有限。这个网站其实是为了练习vibe coding做的，因此绝不是正经哲学测试。大家把它当作一个玩具愉快玩耍即可，无需较真。
+            {copy.intro.declarationBody}
           </p>
-          <p className="mt-2 text-[13px] leading-6 text-stone-600">不过欢迎大家留下有趣的想法！</p>
+          <p className="mt-2 text-[13px] leading-6 text-stone-600">{copy.intro.declarationInvite}</p>
         </div>
 
         <div className="rounded-[1.4rem] border border-stone-200/60 bg-stone-50/60 px-5 py-4">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-stone-400">参考信息</p>
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-stone-400">{copy.intro.references}</p>
           <ul className="grid gap-1.5">
             <li className="flex items-start gap-2 text-[13px] text-stone-600">
               <span className="mt-0.5 shrink-0 text-stone-400">▸</span>
               <span>
-                原作者讲解：
+                {copy.intro.originalAuthor}
                 <a
                   href="https://www.bilibili.com/video/BV1JT4y1K7dp/?spm_id_from=333.337.search-card.all.click"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-medium text-teal-700 underline-offset-2 transition hover:text-teal-900 hover:underline"
                 >
-                  【主义主义】哲学意识形态大全-总纲
+                  {copy.intro.originalVideo}
                 </a>
               </span>
             </li>
             <li className="flex items-start gap-2 text-[13px] text-stone-600">
               <span className="mt-0.5 shrink-0 text-stone-400">▸</span>
               <span>
-                主义主义魔方：
+                {copy.intro.ismismCube}
                 <a
                   href="https://ismismtag.com/"
                   target="_blank"
@@ -1254,7 +1234,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
             onClick={() => setIsOtherIsmsModalOpen(true)}
             className="rounded-full border border-stone-200 bg-white/80 px-4 py-2 text-sm text-stone-600 transition duration-200 hover:border-teal-200 hover:bg-teal-50 hover:text-teal-900"
           >
-            查看其他主义
+            {copy.intro.otherIsms}
           </button>
           <button
             type="button"
@@ -1262,7 +1242,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
             disabled={isSubmitting}
             className="rounded-full border border-stone-300 bg-white/80 px-4 py-2 text-sm text-stone-600 transition duration-200 hover:border-stone-500 hover:bg-white hover:text-stone-950 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isSubmitting ? "正在打开测试结果..." : "测试按钮"}
+            {isSubmitting ? copy.intro.openingPreview : copy.intro.previewButton}
           </button>
         </div>
 
@@ -1278,9 +1258,9 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
             >
               <div className="flex items-center justify-between border-b border-stone-100 px-5 py-4 sm:px-7 sm:py-5">
                 <div>
-                  <h3 className="font-serif text-xl font-bold text-stone-900">全部主义列表</h3>
+                  <h3 className="font-serif text-xl font-bold text-stone-900">{copy.catalog.listTitle}</h3>
                   <p className="mt-0.5 text-xs text-stone-400">
-                    {Object.keys(enhancedCatalog).filter((k) => /^[1-4]-[1-4]-[1-4]$/.test(k)).length} 个主义，点击查看了解详情
+                    {copy.catalog.listDescription(Object.keys(enhancedCatalog).filter((k) => /^[1-4]-[1-4]-[1-4]$/.test(k)).length)}
                   </p>
                 </div>
                 <button
@@ -1297,9 +1277,9 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                 <table className="w-full">
                   <thead className="sticky top-0 z-10 bg-stone-50/95 backdrop-blur-sm">
                     <tr className="border-b border-stone-100">
-                      <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-stone-400 sm:px-6">代码</th>
-                      <th className="px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-stone-400">主义名称</th>
-                      <th className="hidden px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-stone-400 sm:table-cell">代表人物</th>
+                      <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-stone-400 sm:px-6">{copy.catalog.code}</th>
+                      <th className="px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-stone-400">{copy.catalog.name}</th>
+                      <th className="hidden px-2 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-stone-400 sm:table-cell">{copy.catalog.representative}</th>
                       <th className="px-4 py-3 sm:px-6"></th>
                     </tr>
                   </thead>
@@ -1331,7 +1311,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                             </td>
                             <td className="px-2 py-3">
                               <span className="text-sm font-semibold text-stone-900">
-                                {entry.ch_name || "未命名"}
+                                {entry.ch_name || copy.catalog.unnamed}
                               </span>
                             </td>
                             <td className="hidden px-2 py-3 sm:table-cell">
@@ -1350,7 +1330,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                                 }}
                                 className="whitespace-nowrap rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-xs font-medium text-teal-700 transition hover:bg-teal-100 hover:text-teal-900"
                               >
-                                查看
+                                {copy.catalog.view}
                               </button>
                             </td>
                           </tr>
@@ -1390,7 +1370,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                   </h4>
                   {enhancedCatalog[selectedOtherIsmCode].example_people && (
                     <p className="mt-1.5 text-sm text-stone-500">
-                      代表人物：{enhancedCatalog[selectedOtherIsmCode].example_people}
+                      {copy.catalog.representativePrefix}{enhancedCatalog[selectedOtherIsmCode].example_people}
                     </p>
                   )}
                 </div>
@@ -1398,7 +1378,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                   <button
                     onClick={() => setIsIsmDetailOpen(false)}
                     className="rounded-full bg-stone-100 p-2 text-stone-500 transition hover:bg-stone-200 hover:text-stone-800"
-                    title="返回列表"
+                    title={copy.catalog.backToList}
                   >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
@@ -1407,7 +1387,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                   <button
                     onClick={() => { setIsIsmDetailOpen(false); setIsOtherIsmsModalOpen(false); }}
                     className="rounded-full bg-stone-100 p-2 text-stone-400 transition hover:bg-stone-200 hover:text-stone-700"
-                    title="关闭"
+                    title={copy.catalog.close}
                   >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
@@ -1425,7 +1405,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                         </svg>
                       </span>
-                      <h5 className="text-sm font-semibold text-teal-800">一个例子</h5>
+                      <h5 className="text-sm font-semibold text-teal-800">{copy.catalog.example}</h5>
                     </div>
                     <p className="text-[14px] leading-7 text-stone-600">
                       {enhancedCatalog[selectedOtherIsmCode].simple_story}
@@ -1433,7 +1413,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                   </div>
                 ) : (
                   <div className="rounded-[1.3rem] border border-stone-100 bg-stone-50 p-5">
-                    <p className="text-sm text-stone-400">暂无具体例子。</p>
+                    <p className="text-sm text-stone-400">{copy.catalog.noExample}</p>
                   </div>
                 )}
 
@@ -1445,7 +1425,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                       </span>
-                      <h5 className="text-sm font-semibold text-stone-800">核心特征</h5>
+                      <h5 className="text-sm font-semibold text-stone-800">{copy.catalog.coreFeatures}</h5>
                     </div>
                     <div className="grid gap-2">
                       {(enhancedCatalog[selectedOtherIsmCode].feature_list || []).map((feature, idx) => (
@@ -1491,7 +1471,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
           </div>
 
           <p className="mt-4 text-sm leading-7 text-stone-600">
-            第 {currentQuestionNumber} 题 · 剩余 {remainingCount} 题
+            {copy.quiz.question(currentQuestionNumber, remainingCount)}
           </p>
         </div>
 
@@ -1525,7 +1505,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
       <div className="w-full rounded-[1.7rem] border border-stone-200/70 bg-white/96 p-5 shadow-[0_18px_56px_rgba(31,24,18,0.07)] sm:rounded-[2rem] sm:p-8 lg:max-w-[48rem]">
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs text-stone-600">
-            第 {currentQuestionNumber} 题
+            {copy.quiz.questionLabel(currentQuestionNumber)}
           </span>
           <span
             className={`rounded-full border px-3 py-1 text-xs font-medium ${dimensionToneMap[currentQuestion.dimension].badge}`}
@@ -1547,7 +1527,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                 {currentQuestion.question}
               </h2>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-stone-600 sm:mt-5 sm:text-base">
-                每道题最多可选 2 个答案
+                {copy.quiz.maxChoices}
               </p>
             </div>
 
@@ -1598,7 +1578,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
             disabled={currentIndex === 0 || isSubmitting}
             className="w-full rounded-full border border-stone-300 px-5 py-3 text-sm font-medium text-stone-700 transition duration-200 hover:-translate-y-0.5 hover:border-stone-500 hover:bg-white hover:text-stone-950 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
           >
-            上一题
+            {copy.quiz.previous}
           </button>
           {currentIndex < questions.length - 1 ? (
             <button
@@ -1607,7 +1587,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
               disabled={isSubmitting}
               className="w-full rounded-full border border-teal-300 bg-gradient-to-r from-teal-50 to-emerald-50 px-5 py-3 text-sm font-medium text-teal-800 transition duration-200 hover:-translate-y-0.5 hover:border-teal-400 hover:from-teal-100 hover:to-emerald-100 hover:shadow-[0_10px_24px_rgba(15,118,110,0.14)] active:translate-y-0 sm:w-auto"
             >
-              下一题
+              {copy.quiz.next}
             </button>
           ) : (
             <button
@@ -1616,7 +1596,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
               disabled={!allAnswered || isSubmitting}
               className="w-full rounded-full bg-stone-950 px-5 py-3 text-sm font-medium text-stone-50 transition duration-200 hover:-translate-y-0.5 hover:bg-stone-800 hover:shadow-[0_10px_24px_rgba(28,25,23,0.18)] active:translate-y-0 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:text-stone-100 disabled:shadow-none sm:w-auto"
             >
-              {isSubmitting ? "正在生成结果..." : "提交结果"}
+              {isSubmitting ? copy.quiz.submitting : copy.quiz.submit}
             </button>
           )}
         </div>

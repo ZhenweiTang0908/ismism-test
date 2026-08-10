@@ -8,6 +8,7 @@ import type {
   RespondentProfile,
 } from "@/lib/ismism/types";
 import { createAdminClient } from "@/utils/supabase/admin";
+import { getLocaleCopy } from "@/lib/i18n";
 
 const ANSWERS_TABLE_NAMES = [
   process.env.SUPABASE_ANSWERS_TABLE,
@@ -134,11 +135,14 @@ export async function POST(request: Request) {
       answers?: unknown;
       respondent?: unknown;
       clientData?: unknown;
+      lang?: unknown;
     };
 
+    const lang = payload.lang === "en" ? "en" : "zh";
+    const copy = getLocaleCopy(lang);
     const [questions, enhancedCatalog] = await Promise.all([
-      getQuizQuestions(),
-      getEnhancedIsmCatalog(),
+      getQuizQuestions(lang),
+      getEnhancedIsmCatalog(lang),
     ]);
 
     const questionsById = new Map(questions.map((question) => [question.id, question]));
@@ -147,7 +151,7 @@ export async function POST(request: Request) {
     if (!answers || Object.keys(answers).length !== questions.length) {
       return Response.json(
         {
-          error: "题目未全部作答，无法生成结果。",
+          error: copy.errors.incomplete,
         },
         { status: 400 },
       );
@@ -158,6 +162,7 @@ export async function POST(request: Request) {
       questions,
       answers,
       enhancedCatalog,
+      lang,
     });
 
     const answersPayload = questions.map((question) => ({

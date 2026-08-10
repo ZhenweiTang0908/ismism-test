@@ -100,7 +100,29 @@ export const loadOverviewText = async (lang: string = "zh") => {
 };
 
 const buildSystemPrompt = (lang: string = "zh") => {
-  const base = `
+  if (lang === "en") {
+    return `
+You are a thoughtful observer of everyday life who understands philosophy but explains it in plain English. Turn an abstract philosophical test result into a vivid, accessible interpretation that feels insightful without pretending to be a scientific diagnosis.
+
+Requirements:
+1. Avoid academic jargon as the main voice. If a technical term is necessary, explain it in ordinary language.
+2. Prefer familiar modern situations: ordering food, social-media comments, work meetings, games, shopping, and relationships.
+3. Sound warm, lightly humorous, and perceptive—like a smart friend explaining a pattern over coffee.
+4. Avoid filler such as “this reflects your tendency on the X dimension.” Make direct observations instead.
+5. Return:
+   - simpleExplanation: Start with one or two sharp sentences about the person's default mental filter, then connect it to everyday situations. Aim for about 180–300 words.
+   - dimensionInterpretations: Give one short, concrete observation for Field, Ontology, and Phenomenon. Each should include a memorable line and a plain-English explanation. Keep each under 100 words.
+6. Do not give scores, percentages, or judgments about whether the person is good or bad. Use only the overview and result information provided; do not invent biography or historical claims.
+7. Return a JSON object only, with this shape:
+{
+  "simpleExplanation": "...",
+  "dimensionInterpretations": [
+    { "explanation": "..." }
+  ]
+}`.trim();
+  }
+
+  return `
 你是一个不仅懂哲学、还非常擅长“说人话”的深度生活观察员。你的任务是将深奥的哲学测评结果转换成普通人听了会直呼“太准了”的生活化解读。
 
 要求：
@@ -120,21 +142,18 @@ const buildSystemPrompt = (lang: string = "zh") => {
   ]
 }
 `.trim();
-
-  if (lang === "en") {
-    return base + "\n\n**CRITICAL INSTRUCTION**: The user has selected English. You MUST translate and output your entire interpretation (all values in the JSON object) in natural, fluent English.";
-  }
-  return base;
 };
 
-const buildUserPrompt = (overviewText: string, result: QuizResult) =>
+const buildUserPrompt = (overviewText: string, result: QuizResult, lang: string) =>
   [
-    "请基于下面两部分内容生成解读。",
+    lang === "en"
+      ? "Generate the interpretation from the two sources below. Write every user-facing value in natural English."
+      : "请基于下面两部分内容生成解读。",
     "",
-    "【overview】",
+    lang === "en" ? "[Overview]" : "【overview】",
     overviewText,
     "",
-    "【测评结果】",
+    lang === "en" ? "[Test result]" : "【测评结果】",
     JSON.stringify(
       {
         coreCode: result.coreCode,
@@ -251,30 +270,35 @@ const shortenText = (value: string, maxLength: number) => {
   return `${normalized.slice(0, Math.max(0, maxLength - 1)).trim()}…`;
 };
 
-const buildFallbackInterpretation = (result: QuizResult): QuizResultAiInterpretation => ({
-  simpleExplanation: `看世界的时候脑子里自带了一套独有的“滤镜”。简单来说，就像是你去餐厅点菜或者在手机上刷评论区时，总会本能地先关注某些点，再决定这事儿靠不靠谱。这套测试结果展示了你默认的思维导航系统。`,
+const buildFallbackInterpretation = (result: QuizResult, lang: string): QuizResultAiInterpretation => ({
+  simpleExplanation: lang === "en"
+    ? "You move through the world with a distinctive mental filter. It is like ordering from a menu or scrolling through a comment section: before you decide what is convincing, you instinctively notice certain things first. This result describes that default navigation system—not a fixed personality, but a pattern in how you tend to make sense of situations."
+    : `看世界的时候脑子里自带了一套独有的“滤镜”。简单来说，就像是你去餐厅点菜或者在手机上刷评论区时，总会本能地先关注某些点，再决定这事儿靠不靠谱。这套测试结果展示了你默认的思维导航系统。`,
   dimensionInterpretations: result.dimensionResults.map((item) => ({
     key: item.key,
     label: item.label,
     digit: item.digit,
     marker: item.marker,
     title: item.title,
-    explanation: `在${item.label}这块，你更倾向于“${item.title}”。通俗点说，就是${item.summary}`,
+    explanation: lang === "en"
+      ? `In ${item.label}, you lean toward “${item.title}.” In everyday terms, ${item.summary}`
+      : `在${item.label}这块，你更倾向于“${item.title}”。通俗点说，就是${item.summary}`,
   })),
 });
 
 const normalizeInterpretation = (
   raw: Record<string, unknown>,
   result: QuizResult,
+  lang: string,
 ): QuizResultAiInterpretation => {
-  const fallback = buildFallbackInterpretation(result);
+  const fallback = buildFallbackInterpretation(result, lang);
   const rawDimensions = Array.isArray(raw.dimensionInterpretations)
     ? raw.dimensionInterpretations
     : [];
 
   return {
     simpleExplanation: shortenText(
-      getLongText(raw.simpleExplanation, fallback.simpleExplanation, 32),
+      getLongText(raw.simpleExplanation, fallback.simpleExplanation, lang === "en" ? 48 : 32),
       800,
     ),
     dimensionInterpretations: result.dimensionResults.map((item, index) => {
@@ -287,7 +311,9 @@ const normalizeInterpretation = (
         source.explanation.trim().length >= 24
           ? source.explanation.trim()
           : fallback.dimensionInterpretations[index]?.explanation ??
-            `${DIMENSION_LABELS[item.key]}维度上，你更接近 ${item.digit}.${item.title}。${item.summary}`;
+            (lang === "en"
+              ? `In ${item.label}, you are closer to ${item.digit}.${item.title}. ${item.summary}`
+              : `${DIMENSION_LABELS[item.key]}维度上，你更接近 ${item.digit}.${item.title}。${item.summary}`);
 
       return {
         key: item.key,
@@ -379,7 +405,7 @@ export const generateQuizResultInterpretation = async (
     },
     {
       role: "user",
-      content: buildUserPrompt(overviewText, result),
+      content: buildUserPrompt(overviewText, result, lang),
     },
   ];
 
@@ -411,7 +437,7 @@ export const generateQuizResultInterpretation = async (
       const payload = await provider.run();
       const text = extractTextContent(payload);
       const parsed = parseJsonFromText(text);
-      return normalizeInterpretation(parsed, result);
+      return normalizeInterpretation(parsed, result, lang);
     } catch (error) {
       errors.push(
         `${provider.name}: ${error instanceof Error ? error.message : "Unknown error"}`,

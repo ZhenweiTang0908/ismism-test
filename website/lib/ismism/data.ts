@@ -4,9 +4,9 @@ import enhancedCatalogJson from "@/data/ismism-sum-enhanced.json";
 import questionBankEnJson from "@/data/ismism-question-bank-en.json";
 import enhancedCatalogEnJson from "@/data/ismism-sum-enhanced-en.json";
 import { FALLBACK_ISM_INFO } from "@/lib/ismism/mock-data";
+import { getLocaleCopy } from "@/lib/i18n";
 import {
   CHOICE_VALUES,
-  DIMENSION_LABELS,
   DIMENSION_ORDER,
   QUESTION_TYPE_WEIGHTS,
 } from "@/lib/ismism/types";
@@ -149,6 +149,7 @@ const normalizeOptions = (
 const normalizeDatasetQuestion = (
   id: string,
   rawQuestion: RawQuestion,
+  lang?: string,
 ): QuizQuestion | null => {
   const dimension = normalizeDimension(
     rawQuestion.dimension ?? rawQuestion.demenstion,
@@ -165,7 +166,7 @@ const normalizeDatasetQuestion = (
     id,
     question,
     dimension,
-    dimensionLabel: DIMENSION_LABELS[dimension],
+    dimensionLabel: getLocaleCopy(lang).dimensions[dimension],
     type,
     weight: QUESTION_TYPE_WEIGHTS[type],
     options: shuffleArray(options) as [QuizOption, QuizOption, QuizOption, QuizOption],
@@ -254,7 +255,7 @@ export const getQuizQuestions = async (lang: string = "zh") => {
       (async () => {
         const sourceJson = lang === "en" ? questionBankEnJson : questionBankJson;
         const normalized = Object.entries(sourceJson as Record<string, RawQuestion>)
-          .map(([id, rawQuestion]) => normalizeDatasetQuestion(id, rawQuestion))
+          .map(([id, rawQuestion]) => normalizeDatasetQuestion(id, rawQuestion, lang))
           .filter((question): question is QuizQuestion => question !== null);
 
         validateQuestionBank(normalized);

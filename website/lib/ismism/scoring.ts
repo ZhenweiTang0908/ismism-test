@@ -1,4 +1,5 @@
-import { DIMENSION_LABELS, DIMENSION_ORDER } from "./types.ts";
+import { DIMENSION_ORDER } from "./types.ts";
+import { getLocaleCopy } from "../i18n.ts";
 import type {
   AnswerMap,
   ChoiceValue,
@@ -16,7 +17,7 @@ const DIGIT_MARKER_MAP: Record<1 | 2 | 3 | 4, string> = {
   4: "虚无",
 };
 
-const DIMENSION_TITLE_MAP: Record<
+const DIMENSION_TITLE_MAP_ZH: Record<
   DimensionKey,
   Array<{ title: string; summary: string }>
 > = {
@@ -76,6 +77,36 @@ const DIMENSION_TITLE_MAP: Record<
   ],
 };
 
+const DIMENSION_TITLE_MAP_EN: Record<
+  DimensionKey,
+  Array<{ title: string; summary: string }>
+> = {
+  field: [
+    { title: "Established order", summary: "You first look for the rules and boundaries already shaping the situation." },
+    { title: "Operating forces", summary: "You look for the conflicts, incentives, and power relations beneath the surface." },
+    { title: "Situated perspective", summary: "You see the observer's position and point of view as part of the outcome." },
+    { title: "Dynamic reconstruction", summary: "You treat the situation as changeable and focus on reshaping it through action." },
+  ],
+  ontology: [
+    { title: "Concrete objects", summary: "You trust things that can be confirmed, grounded, and tested in practice." },
+    { title: "Relations and systems", summary: "You see connections and structural positions as more important than isolated things." },
+    { title: "Interpretive frames", summary: "You focus on how people define value and how interpretation shapes reality." },
+    { title: "Emergent process", summary: "You see ongoing change, action, and formation as the heart of what things are." },
+  ],
+  phenomenon: [
+    { title: "Direct experience", summary: "You tend to trust intuition and firsthand experience as relatively direct access to reality." },
+    { title: "Mediated information", summary: "You assume that stories and explanations filter what reaches us as truth." },
+    { title: "Constructed perspective", summary: "You emphasize the decisive role of first-person experience in how reality appears." },
+    { title: "Contradiction detection", summary: "You are alert to breaks, inconsistencies, and small details that reveal a deeper problem." },
+  ],
+};
+
+const getDimensionTitleMap = (lang?: string) =>
+  lang === "en" ? DIMENSION_TITLE_MAP_EN : DIMENSION_TITLE_MAP_ZH;
+
+const getDigitMarker = (digit: 1 | 2 | 3 | 4, lang?: string) =>
+  lang === "en" ? getLocaleCopy("en").digitMarkers[String(digit) as "1" | "2" | "3" | "4"].title : DIGIT_MARKER_MAP[digit];
+
 const DIMENSION_AXIS_EXPLANATION_MAP: Record<
   DimensionKey,
   Record<1 | 2 | 3 | 4, string>
@@ -119,6 +150,7 @@ const mergeInformativeList = (
 const buildAxisInsightList = (
   dimensionResults: DimensionResult[],
   rawAxisList: string[] | undefined,
+  lang?: string,
 ): string[] =>
   dimensionResults.map((result, index) => {
     const rawItem = rawAxisList?.[index]?.trim();
@@ -126,40 +158,77 @@ const buildAxisInsightList = (
       return rawItem;
     }
 
-    return `${DIMENSION_LABELS[result.key]}：${DIMENSION_AXIS_EXPLANATION_MAP[result.key][result.digit]}`;
+    const label = getLocaleCopy(lang).dimensions[result.key];
+    if (lang === "en") {
+      const englishExplanations: Record<DimensionKey, Record<1 | 2 | 3 | 4, string>> = {
+        field: {
+          1: "You tend to identify the rules of the environment before deciding how to act.",
+          2: "You look for the mechanisms and competing interests beneath the situation.",
+          3: "You believe the observer's position and involvement can change the outcome.",
+          4: "You see the environment as something action can transform, with room for unexpected turns.",
+        },
+        ontology: {
+          1: "You trust resources and boundaries that can be seen, handled, and clearly verified.",
+          2: "You see the way things connect as more important than any thing taken alone.",
+          3: "You think an object's value depends on how people interpret and define it.",
+          4: "You treat continuing change and action as the core of what a thing is.",
+        },
+        phenomenon: {
+          1: "You usually trust what you have directly seen or heard as a reliable guide to reality.",
+          2: "You are cautious about packaged information and first ask who is telling the story.",
+          3: "You think everyone's view of reality carries a strong personal perspective.",
+          4: "You are good at spotting hidden problems in details that feel unnatural or inconsistent.",
+        },
+      };
+      return `${label}: ${englishExplanations[result.key][result.digit]}`;
+    }
+    return `${label}：${DIMENSION_AXIS_EXPLANATION_MAP[result.key][result.digit]}`;
   });
 
-const buildFallbackSimpleStory = (dimensionResults: DimensionResult[]) => {
+const buildFallbackSimpleStory = (dimensionResults: DimensionResult[], lang?: string) => {
   const field = dimensionResults.find((item) => item.key === "field")?.digit ?? 2;
   const ontology = dimensionResults.find((item) => item.key === "ontology")?.digit ?? 2;
   const phenomenon =
     dimensionResults.find((item) => item.key === "phenomenon")?.digit ?? 2;
 
+  if (lang === "en") {
+    return `When a problem gets complicated, you start with Field ${field}, use Ontology ${ontology} to identify what matters, and then use Phenomenon ${phenomenon} to organize your understanding and action.`;
+  }
   return `在面对复杂问题时，你会先从“场域 ${field}”的方式切入，再用“本体 ${ontology}”判断关键因素，最后通过“现象 ${phenomenon}”来组织理解与行动。`;
 };
 
-const buildFallbackExamplePeople = (dimensionResults: DimensionResult[]) => {
-  const field = dimensionResults.find((item) => item.key === "field")?.title ?? "规则先在";
+const buildFallbackExamplePeople = (dimensionResults: DimensionResult[], lang?: string) => {
+  const field = dimensionResults.find((item) => item.key === "field")?.title ?? (lang === "en" ? "rules first" : "规则先在");
   const ontology =
-    dimensionResults.find((item) => item.key === "ontology")?.title ?? "实体优先";
+    dimensionResults.find((item) => item.key === "ontology")?.title ?? (lang === "en" ? "concrete things first" : "实体优先");
   const phenomenon =
-    dimensionResults.find((item) => item.key === "phenomenon")?.title ?? "经验直达";
+    dimensionResults.find((item) => item.key === "phenomenon")?.title ?? (lang === "en" ? "direct experience" : "经验直达");
 
+  if (lang === "en") {
+    return `Someone who approaches situations through “${field},” judges them through “${ontology},” and makes sense of them through “${phenomenon}.”`;
+  }
   return `一个遇事会从“${field}”切入、判断时偏向“${ontology}”、理解上带着“${phenomenon}”习惯的人。`;
 };
 
 const buildFallbackInfo = (
   dimensionResults: DimensionResult[],
   name: string,
+  lang?: string,
 ) => ({
-  axisList: buildAxisInsightList(dimensionResults, undefined),
-  featureList: [
-    "在判断问题时会综合场域、存在和经验三个层面。",
-    "不依赖单一解释框架，倾向在现实情境中动态权衡。",
-    `相比套用标准答案，你更像在发展属于自己的 ${name} 姿态。`,
-  ],
-  examplePeople: buildFallbackExamplePeople(dimensionResults),
-  simpleStory: buildFallbackSimpleStory(dimensionResults),
+  axisList: buildAxisInsightList(dimensionResults, undefined, lang),
+  featureList: lang === "en"
+    ? [
+        "You combine the world's conditions, the nature of things, and lived experience when making judgments.",
+        "You do not rely on a single explanatory frame; you weigh competing possibilities in context.",
+        `Rather than applying a standard answer, you are developing your own ${name} stance.`,
+      ]
+    : [
+        "在判断问题时会综合场域、存在和经验三个层面。",
+        "不依赖单一解释框架，倾向在现实情境中动态权衡。",
+        `相比套用标准答案，你更像在发展属于自己的 ${name} 姿态。`,
+      ],
+  examplePeople: buildFallbackExamplePeople(dimensionResults, lang),
+  simpleStory: buildFallbackSimpleStory(dimensionResults, lang),
 });
 
 const calculateMatchRate = (dimensionResults: DimensionResult[]): number => {
@@ -183,10 +252,12 @@ const buildQuizResultPayload = ({
   dimensionResults,
   enhancedCatalog,
   coreCode,
+  lang,
 }: {
   dimensionResults: DimensionResult[];
   enhancedCatalog: Record<string, IsmCatalogEntry>;
   coreCode?: string;
+  lang?: string;
 }): QuizResult => {
   const resolvedCoreCode =
     coreCode ?? dimensionResults.map((result) => result.digit).join("-");
@@ -197,8 +268,10 @@ const buildQuizResultPayload = ({
   const randomSuffix = Math.floor(Math.random() * 10_000);
   const clientId = now * 10_000 + randomSuffix;
 
-  const preferredName = coreInfo?.ch_name || `${resolvedCoreCode} 型哲学倾向`;
-  const fallbackInfo = buildFallbackInfo(dimensionResults, preferredName);
+  const preferredName = coreInfo?.ch_name || (lang === "en"
+    ? `${resolvedCoreCode} philosophical tendency`
+    : `${resolvedCoreCode} 型哲学倾向`);
+  const fallbackInfo = buildFallbackInfo(dimensionResults, preferredName, lang);
   const matchRate = calculateMatchRate(dimensionResults);
 
   return {
@@ -210,7 +283,7 @@ const buildQuizResultPayload = ({
     englishName,
     matchRate,
     info: {
-      axisList: buildAxisInsightList(dimensionResults, coreInfo?.axis_list),
+      axisList: buildAxisInsightList(dimensionResults, coreInfo?.axis_list, lang),
       featureList: mergeInformativeList(coreInfo?.feature_list, fallbackInfo.featureList),
       examplePeople: isMeaningfulText(coreInfo?.example_people, 4)
         ? coreInfo.example_people!.trim()
@@ -273,6 +346,7 @@ const buildDimensionResult = (
   dimension: DimensionKey,
   questions: QuizQuestion[],
   answers: AnswerMap,
+  lang?: string,
 ): DimensionResult => {
   const scoped = questions.filter((question) => question.dimension === dimension);
   const voteCounter: Record<ChoiceValue, number> = {
@@ -298,16 +372,17 @@ const buildDimensionResult = (
   // maxScore 是可能的最高票数（每题选2个 * 6题 = 12票）
   const maxScore = scoped.length * 2;
   const percentage = maxScore === 0 ? 0 : round((winningVotes / maxScore) * 100);
-  const copy = DIMENSION_TITLE_MAP[dimension][digit - 1];
+  const copy = getDimensionTitleMap(lang)[dimension][digit - 1];
+  const locale = getLocaleCopy(lang);
 
   return {
     key: dimension,
-    label: DIMENSION_LABELS[dimension],
+    label: locale.dimensions[dimension],
     rawScore: winningVotes,
     maxScore,
     percentage,
     digit,
-    marker: DIGIT_MARKER_MAP[digit],
+    marker: getDigitMarker(digit, lang),
     title: copy.title,
     summary: copy.summary,
   };
@@ -316,17 +391,19 @@ const buildDimensionResult = (
 const buildDimensionResultFromDigit = (
   dimension: DimensionKey,
   digit: 1 | 2 | 3 | 4,
+  lang?: string,
 ): DimensionResult => {
-  const copy = DIMENSION_TITLE_MAP[dimension][digit - 1];
+  const copy = getDimensionTitleMap(lang)[dimension][digit - 1];
+  const locale = getLocaleCopy(lang);
 
   return {
     key: dimension,
-    label: DIMENSION_LABELS[dimension],
+    label: locale.dimensions[dimension],
     rawScore: digit,
     maxScore: 4,
     percentage: digit * 25,
     digit,
-    marker: DIGIT_MARKER_MAP[digit],
+    marker: getDigitMarker(digit, lang),
     title: copy.title,
     summary: copy.summary,
   };
@@ -350,42 +427,48 @@ export const buildQuizResult = ({
   questions,
   answers,
   enhancedCatalog,
+  lang,
 }: {
   questions: QuizQuestion[];
   answers: AnswerMap;
   enhancedCatalog: Record<string, IsmCatalogEntry>;
+  lang?: string;
 }): QuizResult => {
   const dimensionResults = DIMENSION_ORDER.map((dimension) =>
-    buildDimensionResult(dimension, questions, answers),
+    buildDimensionResult(dimension, questions, answers, lang),
   );
 
   return buildQuizResultPayload({
     dimensionResults,
     enhancedCatalog,
+    lang,
   });
 };
 
 export const buildQuizResultFromCoreCode = ({
   coreCode,
   enhancedCatalog,
+  lang,
 }: {
   coreCode: string;
   enhancedCatalog: Record<string, IsmCatalogEntry>;
+  lang?: string;
 }): QuizResult => {
   const digits = parseCoreCode(coreCode);
 
   if (!digits) {
-    throw new Error("结果代码格式不对，请输入类似 1-1-1 的三位数字。");
+    throw new Error(getLocaleCopy(lang).errors.invalidCoreCode);
   }
 
   const normalizedCoreCode = normalizeCoreCode(coreCode);
   const dimensionResults = DIMENSION_ORDER.map((dimension, index) =>
-    buildDimensionResultFromDigit(dimension, digits[index]!),
+    buildDimensionResultFromDigit(dimension, digits[index]!, lang),
   );
 
   return buildQuizResultPayload({
     dimensionResults,
     enhancedCatalog,
     coreCode: normalizedCoreCode,
+    lang,
   });
 };
