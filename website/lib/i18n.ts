@@ -17,10 +17,6 @@ export type LocaleCopy = {
   intro: {
     start: string;
     maxChoices: string;
-    nickname: string;
-    nicknamePlaceholder: string;
-    message: string;
-    messagePlaceholder: string;
     startButton: string;
     whatItMeasures: string;
     description: string;
@@ -42,8 +38,18 @@ export type LocaleCopy = {
     maxChoices: string;
     previous: string;
     next: string;
+    finish: string;
     submitting: string;
     submit: string;
+  };
+  profile: {
+    title: string;
+    description: string;
+    nickname: string;
+    nicknamePlaceholder: string;
+    message: string;
+    messagePlaceholder: string;
+    back: string;
   };
   result: {
     label: string;
@@ -108,10 +114,6 @@ const zh: LocaleCopy = {
   intro: {
     start: "开始测试",
     maxChoices: "每道题最多可选 2 个答案",
-    nickname: "昵称（可选）",
-    nicknamePlaceholder: "留空也可以",
-    message: "留言（可选）",
-    messagePlaceholder: "可留一句想法",
     startButton: "开始答题",
     whatItMeasures: "这个测试在测什么",
     description: "这是一个庸俗的哲学意识形态分类框架，会从场域、本体和现象三个维度评估你的意识形态倾向。",
@@ -133,8 +135,18 @@ const zh: LocaleCopy = {
     maxChoices: "每道题最多可选 2 个答案",
     previous: "上一题",
     next: "下一题",
+    finish: "完成答题",
     submitting: "正在生成结果...",
     submit: "提交结果",
+  },
+  profile: {
+    title: "答题完成",
+    description: "生成结果前，你可以留下昵称和想法。两项都是可选的，直接提交也可以。",
+    nickname: "昵称（可选）",
+    nicknamePlaceholder: "留空也可以",
+    message: "留言（可选）",
+    messagePlaceholder: "可留一句想法",
+    back: "返回答题",
   },
   result: {
     label: "测试结果",
@@ -204,10 +216,6 @@ const en: LocaleCopy = {
   intro: {
     start: "Start the test",
     maxChoices: "Choose up to two answers for each question",
-    nickname: "Nickname (optional)",
-    nicknamePlaceholder: "You can leave this blank",
-    message: "Message (optional)",
-    messagePlaceholder: "Share a thought if you like",
     startButton: "Start answering",
     whatItMeasures: "What does this test measure?",
     description: "This is a playful framework for mapping philosophical and ideological tendencies across three dimensions: Field, Ontology, and Phenomenon.",
@@ -229,8 +237,18 @@ const en: LocaleCopy = {
     maxChoices: "Choose up to two answers",
     previous: "Previous",
     next: "Next",
+    finish: "Finish answering",
     submitting: "Generating result...",
     submit: "Submit result",
+  },
+  profile: {
+    title: "You’re all done",
+    description: "Before generating your result, you can leave a nickname and a thought. Both fields are optional, so you can also submit right away.",
+    nickname: "Nickname (optional)",
+    nicknamePlaceholder: "You can leave this blank",
+    message: "Message (optional)",
+    messagePlaceholder: "Share a thought if you like",
+    back: "Back to questions",
   },
   result: {
     label: "Your result",

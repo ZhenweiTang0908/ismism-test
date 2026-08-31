@@ -22,7 +22,7 @@ const emptyProfile: RespondentProfile = {
   message: "",
 };
 
-type Phase = "intro" | "quiz" | "result";
+type Phase = "intro" | "quiz" | "profile" | "result";
 
 type QuizExperienceProps = {
   questions: QuizQuestion[];
@@ -245,7 +245,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
 
   const currentQuestion = questions[currentIndex];
   const currentQuestionNumber = currentIndex + 1;
-  const answeredCount = Object.keys(answers).length;
+  const answeredCount = Object.values(answers).filter((choices) => choices.length > 0).length;
   const remainingCount = questions.length - answeredCount;
   const progress = phase === "quiz" ? (answeredCount / questions.length) * 100 : 0;
   const allAnswered = answeredCount === questions.length;
@@ -313,6 +313,17 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
 
     setError("");
     setCurrentIndex((index) => Math.max(0, index - 1));
+  };
+
+  const openProfileStep = () => {
+    if (!allAnswered) {
+      setError(copy.errors.incomplete);
+      return;
+    }
+
+    setError("");
+    setPhase("profile");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const jumpToQuestion = (index: number) => {
@@ -1086,6 +1097,78 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
     );
   }
 
+  if (phase === "profile") {
+    return (
+      <motion.section
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="mx-auto grid w-full max-w-xl gap-4 sm:gap-5"
+      >
+        <div className="rounded-[1.7rem] border border-stone-200/70 bg-[linear-gradient(145deg,rgba(240,253,250,0.94),rgba(255,255,255,0.98)_52%,rgba(255,247,237,0.9))] p-5 shadow-[0_18px_60px_rgba(31,24,18,0.07)] sm:rounded-[2rem] sm:p-8">
+          <div className="inline-flex rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-800">
+            {answeredCount} / {questions.length}
+          </div>
+          <h2 className="mt-4 font-serif text-3xl font-semibold text-stone-950 sm:text-4xl">
+            {copy.profile.title}
+          </h2>
+          <p className="mt-3 text-sm leading-7 text-stone-700 sm:text-base">
+            {copy.profile.description}
+          </p>
+
+          <div className="mt-7 grid gap-5">
+            <label className="grid gap-2">
+              <span className="text-sm font-medium text-stone-600">{copy.profile.nickname}</span>
+              <input
+                value={profile.name}
+                onChange={(event) => updateName(event.target.value)}
+                maxLength={120}
+                className="rounded-2xl border border-stone-200 bg-white/90 px-4 py-3 text-sm text-stone-900 outline-none transition duration-200 placeholder:text-stone-400 focus:border-teal-600 focus:bg-white focus:ring-4 focus:ring-teal-100/70"
+                placeholder={copy.profile.nicknamePlaceholder}
+              />
+            </label>
+
+            <label className="grid gap-2">
+              <span className="text-sm font-medium text-stone-600">{copy.profile.message}</span>
+              <textarea
+                value={profile.message}
+                onChange={(event) => updateMessage(event.target.value)}
+                maxLength={2000}
+                rows={5}
+                className="resize-y rounded-2xl border border-stone-200 bg-white/90 px-4 py-3 text-sm leading-7 text-stone-900 outline-none transition duration-200 placeholder:text-stone-400 focus:border-teal-600 focus:bg-white focus:ring-4 focus:ring-teal-100/70"
+                placeholder={copy.profile.messagePlaceholder}
+              />
+            </label>
+          </div>
+
+          {error ? <p className="mt-5 text-sm text-red-600">{error}</p> : null}
+
+          <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                setError("");
+                setPhase("quiz");
+              }}
+              disabled={isSubmitting}
+              className="w-full rounded-full border border-stone-300 px-5 py-3 text-sm font-medium text-stone-700 transition duration-200 hover:-translate-y-0.5 hover:border-stone-500 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            >
+              {copy.profile.back}
+            </button>
+            <button
+              type="button"
+              onClick={submitQuiz}
+              disabled={isSubmitting}
+              className="w-full rounded-full bg-stone-950 px-6 py-3 text-sm font-medium text-stone-50 transition duration-200 hover:-translate-y-0.5 hover:bg-stone-800 hover:shadow-[0_10px_24px_rgba(28,25,23,0.18)] disabled:cursor-not-allowed disabled:bg-stone-300 sm:w-auto"
+            >
+              {isSubmitting ? copy.quiz.submitting : copy.quiz.submit}
+            </button>
+          </div>
+        </div>
+      </motion.section>
+    );
+  }
+
   if (phase === "intro") {
     return (
       <section className="mx-auto grid w-full max-w-5xl gap-4 sm:gap-5">
@@ -1097,29 +1180,6 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
             <p className="mt-3 text-sm leading-7 text-stone-800">
               {copy.intro.maxChoices}
             </p>
-
-            <div className="mt-6 grid gap-4">
-              <label className="grid gap-2">
-                <span className="text-sm text-stone-500">{copy.intro.nickname}</span>
-                <input
-                  value={profile.name}
-                  onChange={(event) => updateName(event.target.value)}
-                  className="rounded-2xl border border-stone-200 bg-white/82 px-4 py-3 text-sm text-stone-900 outline-none transition duration-200 placeholder:text-stone-400 focus:border-teal-600 focus:bg-white"
-                  placeholder={copy.intro.nicknamePlaceholder}
-                />
-              </label>
-
-              <label className="grid gap-2">
-                <span className="text-sm text-stone-500">{copy.intro.message}</span>
-                <textarea
-                  value={profile.message}
-                  onChange={(event) => updateMessage(event.target.value)}
-                  rows={4}
-                  className="rounded-2xl border border-stone-200 bg-white/82 px-4 py-3 text-sm leading-7 text-stone-900 outline-none transition duration-200 placeholder:text-stone-400 focus:border-teal-600 focus:bg-white"
-                  placeholder={copy.intro.messagePlaceholder}
-                />
-              </label>
-            </div>
 
             <button
               type="button"
@@ -1592,11 +1652,11 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
           ) : (
             <button
               type="button"
-              onClick={submitQuiz}
+              onClick={openProfileStep}
               disabled={!allAnswered || isSubmitting}
               className="w-full rounded-full bg-stone-950 px-5 py-3 text-sm font-medium text-stone-50 transition duration-200 hover:-translate-y-0.5 hover:bg-stone-800 hover:shadow-[0_10px_24px_rgba(28,25,23,0.18)] active:translate-y-0 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:text-stone-100 disabled:shadow-none sm:w-auto"
             >
-              {isSubmitting ? copy.quiz.submitting : copy.quiz.submit}
+              {copy.quiz.finish}
             </button>
           )}
         </div>
