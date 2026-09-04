@@ -9,7 +9,7 @@ import type {
 } from "@/lib/ismism/types";
 
 const DEFAULT_SILICONCLOUD_BASE_URL = "https://api.siliconflow.cn/v1";
-const DEFAULT_SILICONCLOUD_MODEL = "Pro/MiniMaxAI/MiniMax-M2.5";
+const DEFAULT_SILICONCLOUD_MODEL = "deepseek-ai/DeepSeek-V3.2";
 const DEFAULT_AZURE_API_VERSION = "2024-12-01-preview";
 
 const WEBSITE_ENV_LOCAL_FILE_PATH = path.join(process.cwd(), ".env.local");

@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=BaseModel)
 
-DEFAULT_SILICONCLOUD_MODEL = "Pro/MiniMaxAI/MiniMax-M2.5"
+DEFAULT_SILICONCLOUD_MODEL = "deepseek-ai/DeepSeek-V3.2"
 
 
 def _load_env() -> None:
