@@ -609,7 +609,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
     return (
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
         <section className="grid w-full gap-4 sm:gap-5">
-        <article className={`overflow-hidden rounded-[1.6rem] border border-white/50 bg-gradient-to-br ${bgGradient} backdrop-blur-2xl p-5 shadow-[0_24px_72px_rgba(31,24,18,0.08)] sm:rounded-[2rem] sm:p-7`}>
+        <article className={`overflow-hidden rounded-[1.4rem] border border-white/70 bg-gradient-to-br ${bgGradient} p-5 shadow-[0_14px_42px_rgba(31,24,18,0.06)] sm:rounded-[1.7rem] sm:p-7`}>
           <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-stone-500">{copy.result.label}</p>
@@ -638,7 +638,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
               </div>
             </div>
 
-            <div className="rounded-[1.5rem] bg-white/70 p-5 shadow-sm sm:w-[38rem] sm:p-6">
+            <div className="rounded-[1.3rem] bg-white/80 p-5 shadow-sm sm:w-[38rem] sm:p-6">
               <div className="mb-4 h-1 w-8 rounded-full bg-gradient-to-r from-amber-200 to-teal-300"></div>
               <h3 className="text-3xl font-bold text-stone-950 sm:text-[2.2rem]">{examplePeopleDisplay.name}</h3>
               {examplePeopleDisplay.description ? (
@@ -667,7 +667,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
                   return (
                     <div
                       key={item.key}
-                      className={`rounded-[1rem] border p-4 shadow-sm ${cardColorMap[item.key]}`}
+                      className={`rounded-[0.9rem] border p-4 ${cardColorMap[item.key]}`}
                     >
                       <p className={`text-[15px] font-semibold ${labelColorMap[item.key]}`}>
                         {copy.dimensions[item.key]}
@@ -690,7 +690,7 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
           </div>
         </article>
 
-        <article className="rounded-[1.5rem] border border-stone-200/80 bg-white/92 p-5 shadow-[0_14px_36px_rgba(43,33,23,0.05)] sm:rounded-[1.8rem] sm:p-7">
+        <article className="rounded-[1.3rem] border border-stone-200/80 bg-white/94 p-5 shadow-[0_10px_28px_rgba(43,33,23,0.04)] sm:rounded-[1.6rem] sm:p-7">
           <h3 className="font-serif text-2xl font-semibold text-stone-950">{copy.result.firstDimension}</h3>
           <p className="mt-4 text-sm leading-7 text-stone-700 sm:text-base sm:leading-8">
             {copy.result.firstDimensionDescription}
@@ -733,14 +733,14 @@ export default function QuizExperience({ questions, enhancedCatalog, lang }: Qui
           </div>
         </article>
 
-        <article className="rounded-[1.5rem] border border-stone-200/80 bg-white/92 p-5 shadow-[0_14px_36px_rgba(43,33,23,0.05)] sm:rounded-[1.8rem] sm:p-7">
+        <article className="rounded-[1.3rem] border border-stone-200/80 bg-white/94 p-5 shadow-[0_10px_28px_rgba(43,33,23,0.04)] sm:rounded-[1.6rem] sm:p-7">
           <h3 className="font-serif text-2xl font-semibold text-stone-950">{copy.result.example}</h3>
           <p className="mt-4 text-[15px] leading-8 text-stone-700">
             {response.result.info.simpleStory}
           </p>
         </article>
 
-        <article className="rounded-[1.5rem] border border-stone-200/80 bg-white/92 p-5 shadow-[0_14px_36px_rgba(43,33,23,0.05)] sm:rounded-[1.8rem] sm:p-7">
+        <article className="rounded-[1.3rem] border border-stone-200/80 bg-white/94 p-5 shadow-[0_10px_28px_rgba(43,33,23,0.04)] sm:rounded-[1.6rem] sm:p-7">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="font-serif text-2xl font-semibold text-stone-950">{copy.result.aiInterpretation}</h3>
             {isGeneratingAiInterpretation ? (

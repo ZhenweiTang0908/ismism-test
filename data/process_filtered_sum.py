@@ -20,7 +20,7 @@ def clean_json_string(s):
     return s.strip()
 
 def get_fallback_client():
-    """根据优先级使用系统中的API：SiliconCloud > OpenRouter > Azure"""
+    """根据优先级使用系统中的API：SiliconCloud > OpenRouter"""
     # 1. 尝试 SiliconCloud
     api_key = os.getenv("SILICONCLOUD_API_KEY")
     base_url = os.getenv("SILICONCLOUD_BASE_URL")
@@ -41,19 +41,6 @@ def get_fallback_client():
             default_headers={"HTTP-Referer": os.getenv("OPENROUTER_HTTP_REFERER", ""), "X-Title": os.getenv("OPENROUTER_APP_TITLE", "")}
         ), model
         
-    # 3. 尝试 Azure OpenAI
-    api_key = os.getenv("AZURE_OPENAI_API_KEY")
-    base_url = os.getenv("AZURE_OPENAI_ENDPOINT")
-    model = os.getenv("AZURE_OPENAI_DEPLOYMENT")
-    
-    if api_key and base_url and model:
-        from openai import AzureOpenAI
-        return AzureOpenAI(
-            api_key=api_key,
-            azure_endpoint=base_url,
-            api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-12-01-preview")
-        ), model
-
     raise ValueError("未在 .env 文件中找到有效的 LLM 配置。")
 
 def main():

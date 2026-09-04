@@ -78,7 +78,7 @@ def clean_json_string(text: str) -> str:
 
 def get_llm_client():
     try:
-        from openai import AzureOpenAI, OpenAI
+        from openai import OpenAI
     except ImportError:
         print("请先安装依赖: pip install openai python-dotenv")
         raise SystemExit(1)
@@ -105,20 +105,6 @@ def get_llm_client():
         }
         return (
             OpenAI(api_key=api_key, base_url=base_url, default_headers=headers),
-            model,
-        )
-
-    api_key = os.getenv("AZURE_OPENAI_API_KEY")
-    endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
-    model = os.getenv("AZURE_OPENAI_DEPLOYMENT")
-    if api_key and endpoint and model:
-        api_version = os.getenv("AZURE_OPENAI_API_VERSION", "2024-12-01-preview")
-        return (
-            AzureOpenAI(
-                api_key=api_key,
-                azure_endpoint=endpoint,
-                api_version=api_version,
-            ),
             model,
         )
 

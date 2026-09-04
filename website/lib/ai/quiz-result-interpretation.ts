@@ -10,7 +10,8 @@ import type {
 
 const DEFAULT_SILICONCLOUD_BASE_URL = "https://api.siliconflow.cn/v1";
 const DEFAULT_SILICONCLOUD_MODEL = "deepseek-ai/DeepSeek-V3.2";
-const DEFAULT_AZURE_API_VERSION = "2024-12-01-preview";
+const DEFAULT_ONEYUAN_API_BASE_URL = "https://1yuanapi.com/v1";
+const DEFAULT_ONEYUAN_API_MODEL = "gpt-5.6-terra";
 
 const WEBSITE_ENV_LOCAL_FILE_PATH = path.join(process.cwd(), ".env.local");
 const WEBSITE_ENV_FILE_PATH = path.join(process.cwd(), ".env");
@@ -358,33 +359,29 @@ const requestSiliconCloud = async (messages: ChatMessage[]) => {
   return response.json();
 };
 
-const requestAzureOpenAI = async (messages: ChatMessage[]) => {
-  const endpoint = getServerEnv("AZURE_OPENAI_ENDPOINT");
-  const apiKey = getServerEnv("AZURE_OPENAI_API_KEY");
-  const deployment = getServerEnv("AZURE_OPENAI_DEPLOYMENT");
-
-  if (!endpoint || !apiKey || !deployment) {
-    throw new Error("Missing Azure OpenAI configuration");
+const requestOneyuanApi = async (messages: ChatMessage[]) => {
+  const apiKey = getServerEnv("ONEYUAN_API_KEY");
+  if (!apiKey) {
+    throw new Error("Missing ONEYUAN_API_KEY");
   }
 
-  const apiVersion = getServerEnv("AZURE_OPENAI_API_VERSION") ?? DEFAULT_AZURE_API_VERSION;
-  const url =
-    `${endpoint.replace(/\/$/, "")}/openai/deployments/${deployment}/chat/completions` +
-    `?api-version=${encodeURIComponent(apiVersion)}`;
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "api-key": apiKey,
+  const response = await fetch(
+    `${(getServerEnv("ONEYUAN_API_BASE_URL") ?? DEFAULT_ONEYUAN_API_BASE_URL).replace(/\/$/, "")}/chat/completions`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: DEFAULT_ONEYUAN_API_MODEL,
+        temperature: 0.5,
+        response_format: { type: "json_object" },
+        messages,
+      }),
+      cache: "no-store",
     },
-    body: JSON.stringify({
-      temperature: 0.4,
-      response_format: { type: "json_object" },
-      messages,
-    }),
-    cache: "no-store",
-  });
+  );
 
   if (!response.ok) {
     throw new Error(await response.text());
@@ -413,18 +410,14 @@ export const generateQuizResultInterpretation = async (
 
   const providers = [
     {
+      enabled: Boolean(getServerEnv("ONEYUAN_API_KEY")),
+      name: "1yuanapi",
+      run: () => requestOneyuanApi(messages),
+    },
+    {
       enabled: Boolean(getServerEnv("SILICONCLOUD_API_KEY")),
       name: "SiliconCloud",
       run: () => requestSiliconCloud(messages),
-    },
-    {
-      enabled: Boolean(
-        getServerEnv("AZURE_OPENAI_ENDPOINT") &&
-          getServerEnv("AZURE_OPENAI_API_KEY") &&
-          getServerEnv("AZURE_OPENAI_DEPLOYMENT"),
-      ),
-      name: "Azure OpenAI",
-      run: () => requestAzureOpenAI(messages),
     },
   ];
 

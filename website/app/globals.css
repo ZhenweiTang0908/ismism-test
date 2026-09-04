@@ -11,7 +11,7 @@
 :root {
   --font-body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-display: "Noto Serif SC Local", Georgia, serif;
-  --background: #f6f1ea;
+  --background: #f8f5f0;
   --foreground: #1f1812;
   --paper: rgba(255, 252, 248, 0.76);
   --accent: #0f766e;
@@ -38,22 +38,9 @@ body {
   background: var(--background);
   color: var(--foreground);
   background-image:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 24%),
-    radial-gradient(circle at top, rgba(245, 158, 11, 0.08), transparent 25%),
-    linear-gradient(135deg, rgba(15, 118, 110, 0.04), transparent 28%);
+    radial-gradient(circle at 50% -10%, rgba(15, 118, 110, 0.08), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.36), transparent 36%);
   font-family: var(--font-body), sans-serif;
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(rgba(68, 55, 43, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(68, 55, 43, 0.04) 1px, transparent 1px);
-  background-size: 32px 32px;
-  mask-image: radial-gradient(circle at center, black 45%, transparent 100%);
 }
 
 ::selection {
@@ -64,6 +51,17 @@ input,
 textarea,
 button {
   font: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid rgba(15, 118, 110, 0.42);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 a {
