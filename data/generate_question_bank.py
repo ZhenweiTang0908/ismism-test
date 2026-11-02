@@ -91,23 +91,6 @@ def get_llm_client():
     if api_key and base_url and model:
         return OpenAI(api_key=api_key, base_url=base_url), model
 
-    api_key = os.getenv("OPENROUTER_API_KEY")
-    base_url = os.getenv("OPENROUTER_BASE_URL")
-    model = (
-        os.getenv("GEMINI_MODEL")
-        or os.getenv("CLAUDE_MODEL")
-        or os.getenv("GROK_MODEL")
-    )
-    if api_key and base_url and model:
-        headers = {
-            "HTTP-Referer": os.getenv("OPENROUTER_HTTP_REFERER", ""),
-            "X-Title": os.getenv("OPENROUTER_APP_TITLE", ""),
-        }
-        return (
-            OpenAI(api_key=api_key, base_url=base_url, default_headers=headers),
-            model,
-        )
-
     raise ValueError("未找到可用的 LLM 配置，请检查项目根目录 .env。")
 
 

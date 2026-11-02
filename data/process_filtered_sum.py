@@ -19,29 +19,16 @@ def clean_json_string(s):
     s = re.sub(r'\s*```$', '', s)
     return s.strip()
 
-def get_fallback_client():
-    """根据优先级使用系统中的API：SiliconCloud > OpenRouter"""
-    # 1. 尝试 SiliconCloud
+def get_llm_client():
+    """使用 SiliconCloud 的 LLM 配置"""
     api_key = os.getenv("SILICONCLOUD_API_KEY")
     base_url = os.getenv("SILICONCLOUD_BASE_URL")
     model = os.getenv("SILICONCLOUD_MODEL")
-    
+
     if api_key and base_url and model:
         return OpenAI(api_key=api_key, base_url=base_url), model
-        
-    # 2. 尝试 OpenRouter
-    api_key = os.getenv("OPENROUTER_API_KEY")
-    base_url = os.getenv("OPENROUTER_BASE_URL")
-    model = os.getenv("GEMINI_MODEL") or os.getenv("CLAUDE_MODEL") or os.getenv("GROK_MODEL")
-    
-    if api_key and base_url and model:
-        return OpenAI(
-            api_key=api_key, 
-            base_url=base_url, 
-            default_headers={"HTTP-Referer": os.getenv("OPENROUTER_HTTP_REFERER", ""), "X-Title": os.getenv("OPENROUTER_APP_TITLE", "")}
-        ), model
-        
-    raise ValueError("未在 .env 文件中找到有效的 LLM 配置。")
+
+    raise ValueError("未在 .env 文件中找到有效的 SiliconCloud 配置。")
 
 def main():
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -51,7 +38,7 @@ def main():
     env_path = os.path.join(project_root, '.env')
     load_dotenv(env_path)
     
-    client, model = get_fallback_client()
+    client, model = get_llm_client()
     
     filtered_json_path = os.path.join(current_dir, 'ismism-sum-filtered.json')
     overview_path = os.path.join(current_dir, 'overview.txt')

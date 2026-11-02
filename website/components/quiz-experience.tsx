@@ -92,7 +92,19 @@ const splitExamplePeople = (value: string, fallbackName: string) => {
   };
 };
 
+const AI_LOADING_MIN_MS = 5_000;
+const AI_LOADING_MAX_MS = 10_000;
+
+const sleep = (ms: number) =>
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
 const requestAiInterpretation = async (result: QuizResult, lang?: string) => {
+  const startedAt = Date.now();
+  const targetDelay =
+    AI_LOADING_MIN_MS + Math.random() * (AI_LOADING_MAX_MS - AI_LOADING_MIN_MS);
+
   const response = await fetch("/api/quiz/explain", {
     method: "POST",
     headers: {
@@ -108,6 +120,8 @@ const requestAiInterpretation = async (result: QuizResult, lang?: string) => {
   if (!response.ok || !payload.interpretation) {
     throw new Error(payload.error || getLocaleCopy(lang).errors.ai);
   }
+
+  await sleep(Math.max(0, targetDelay - (Date.now() - startedAt)));
 
   return payload.interpretation;
 };

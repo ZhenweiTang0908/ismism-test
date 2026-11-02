@@ -7,9 +7,10 @@ import type {
   QuizResult,
   QuizResultAiInterpretation,
 } from "@/lib/ismism/types";
+import { getPresetInterpretation } from "@/lib/ai/preset-interpretations";
 
 const DEFAULT_SILICONCLOUD_BASE_URL = "https://api.siliconflow.cn/v1";
-const DEFAULT_SILICONCLOUD_MODEL = "deepseek-ai/DeepSeek-V3.2";
+const DEFAULT_SILICONCLOUD_MODEL = "deepseek-ai/DeepSeek-V4.1-Flash";
 const DEFAULT_ONEYUAN_API_BASE_URL = "https://1yuanapi.com/v1";
 const DEFAULT_ONEYUAN_API_MODEL = "gpt-5.6-terra";
 
@@ -394,6 +395,18 @@ export const generateQuizResultInterpretation = async (
   result: QuizResult,
   lang: string = "zh"
 ): Promise<QuizResultAiInterpretation> => {
+  const preset = getPresetInterpretation(result, lang);
+  if (preset) {
+    return preset;
+  }
+
+  const aiFallbackEnabled =
+    getServerEnv("AI_INTERPRETATION_FALLBACK_ENABLED") === "true";
+
+  if (!aiFallbackEnabled) {
+    return buildFallbackInterpretation(result, lang);
+  }
+
   const overviewText = await loadOverviewText(lang);
   const messages: ChatMessage[] = [
     {
@@ -410,14 +423,14 @@ export const generateQuizResultInterpretation = async (
 
   const providers = [
     {
-      enabled: Boolean(getServerEnv("ONEYUAN_API_KEY")),
-      name: "1yuanapi",
-      run: () => requestOneyuanApi(messages),
-    },
-    {
       enabled: Boolean(getServerEnv("SILICONCLOUD_API_KEY")),
       name: "SiliconCloud",
       run: () => requestSiliconCloud(messages),
+    },
+    {
+      enabled: Boolean(getServerEnv("ONEYUAN_API_KEY")),
+      name: "1yuanapi",
+      run: () => requestOneyuanApi(messages),
     },
   ];
 
