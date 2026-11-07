@@ -113,7 +113,7 @@ Requirements:
 4. Avoid filler such as “this reflects your tendency on the X dimension.” Make direct observations instead.
 5. Return:
    - simpleExplanation: Start with one or two sharp sentences about the person's default mental filter, then connect it to everyday situations. Aim for about 180–300 words.
-   - dimensionInterpretations: Give one short, concrete observation for Field, Ontology, and Phenomenon. Each should include a memorable line and a plain-English explanation. Keep each under 100 words.
+   - dimensionInterpretations: Give one short, concrete observation for Field, Ontology, and Phenomenon. Each should be a natural explanation that directly states the observation; do not use labels such as "punchline" or "in plain terms". Keep each under 100 words.
 6. Do not give scores, percentages, or judgments about whether the person is good or bad. Use only the overview and result information provided; do not invent biography or historical claims.
 7. Return a JSON object only, with this shape:
 {
@@ -134,7 +134,7 @@ Requirements:
 4. **拒绝废话**：不要说“这反映了你在某某维度的倾向”这种套话，给出直接、一针见血的观察。
 5. **结构要求**：
    - simpleExplanation：通俗解读。先用一两句极其犀利的大白话总结这个人的“性格底色”，然后结合现代生活场景展开，解释这种思维方式在现实中是怎么表现的。控制在 300 字左右。
-   - dimensionInterpretations：针对三个维度的拆解。每条解释必须包含：[生活化金句] + [大白话分析]。控制在 100 字以内。
+   - dimensionInterpretations：针对三个维度的拆解。每条解释用自然的分析性语言直接给出观察和解释，不要使用“金句”“大白话”之类的标签。控制在 100 字以内。
 6. **约束**：不要输出分数、百分比或优劣判断。只根据 overview 和测评结果生成的 feature_list 等信息进行解读，不要瞎编历史。
 7. **返回格式**：严格返回 JSON 对象，不要包含 Markdown 代码块。
 {
